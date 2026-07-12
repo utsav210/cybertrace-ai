@@ -1,0 +1,326 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    @apply bg-navy-900 text-white font-sans antialiased;
+    background: linear-gradient(135deg, #0A1128 0%, #1C305C 100%);
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-navy-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-600;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+  }
+
+  .glass-modal {
+    background: rgba(15, 29, 61, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  .stat-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(245, 158, 11, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .nav-item:hover {
+    background: rgba(255,255,255,0.08);
+    color: white;
+  }
+
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.8) 0%, rgba(37, 99, 235, 0.6) 100%);
+    color: white;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center gap-2;
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563eb 100%);
+    color: white;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-accent {
+    @apply px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center gap-2;
+    background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+    color: white;
+  }
+
+  .btn-accent:hover {
+    background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-success {
+    @apply px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-200 flex items-center gap-1.5;
+    background: rgba(16, 185, 129, 0.2);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .btn-success:hover {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: #10B981;
+  }
+
+  .btn-danger {
+    @apply px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-200 flex items-center gap-1.5;
+    background: rgba(220, 38, 38, 0.2);
+    color: #DC2626;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+
+  .btn-danger:hover {
+    background: rgba(220, 38, 38, 0.3);
+    border-color: #DC2626;
+  }
+
+  .btn-info {
+    @apply px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-200 flex items-center gap-1.5;
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  .btn-info:hover {
+    background: rgba(59, 130, 246, 0.3);
+    border-color: #60a5fa;
+  }
+
+  .badge-open {
+    @apply px-2.5 py-1 rounded-full text-xs font-semibold;
+    background: rgba(245, 158, 11, 0.2);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .badge-active {
+    @apply px-2.5 py-1 rounded-full text-xs font-semibold;
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  .badge-closed {
+    @apply px-2.5 py-1 rounded-full text-xs font-semibold;
+    background: rgba(16, 185, 129, 0.2);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .badge-critical {
+    @apply px-2.5 py-1 rounded-full text-xs font-semibold;
+    background: rgba(220, 38, 38, 0.2);
+    color: #DC2626;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+
+  .badge-high {
+    @apply px-2.5 py-1 rounded-full text-xs font-semibold;
+    background: rgba(234, 88, 12, 0.2);
+    color: #ea580c;
+    border: 1px solid rgba(234, 88, 12, 0.3);
+  }
+
+  .badge-medium {
+    @apply px-2.5 py-1 rounded-full text-xs font-semibold;
+    background: rgba(245, 158, 11, 0.2);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .data-table {
+    @apply w-full text-sm;
+  }
+
+  .data-table th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider;
+    color: rgba(255,255,255,0.4);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .data-table td {
+    @apply px-4 py-3;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.85);
+  }
+
+  .data-table tr:hover td {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .tab-btn {
+    @apply px-4 py-3 text-sm font-medium transition-all duration-200 border-b-2 flex items-center gap-2 whitespace-nowrap;
+    color: rgba(255,255,255,0.5);
+    border-color: transparent;
+  }
+
+  .tab-btn:hover {
+    color: rgba(255,255,255,0.8);
+  }
+
+  .tab-btn.active {
+    color: #F59E0B;
+    border-color: #F59E0B;
+  }
+
+  .risk-bar-wrapper {
+    @apply relative h-2 rounded-full overflow-hidden;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .form-input {
+    @apply w-full px-3 py-2 rounded-lg text-sm text-white outline-none transition-all duration-200;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .form-input:focus {
+    border-color: rgba(59, 130, 246, 0.6);
+    background: rgba(255,255,255,0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+
+  .form-input::placeholder {
+    color: rgba(255,255,255,0.3);
+  }
+
+  .form-label {
+    @apply block text-xs font-semibold mb-1.5 uppercase tracking-wider;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .drop-zone {
+    @apply relative rounded-xl p-8 text-center cursor-pointer transition-all duration-200;
+    border: 2px dashed rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .drop-zone:hover, .drop-zone.active {
+    border-color: rgba(245, 158, 11, 0.5);
+    background: rgba(245, 158, 11, 0.05);
+  }
+
+  .suspicious-pulse {
+    animation: pulseRing 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  }
+
+  .skeleton {
+    @apply rounded animate-pulse;
+    background: rgba(255,255,255,0.07);
+  }
+}
+
+/* Graph canvas styles */
+.graph-container canvas {
+  border-radius: 12px;
+}
+
+/* Print styles for report */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-report {
+    color: black;
+    background: white;
+    padding: 40px;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Animations */
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+.animate-slide-up { animation: slideUp 0.4s ease-out; }
+
+/* Notification badge pulse */
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
