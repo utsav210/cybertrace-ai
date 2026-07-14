@@ -76,3 +76,20 @@ Thumbs.db
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Python virtual environment
+backend/venv/
+venv/
+.venv/
+
+# Python caching
+__pycache__/
+*.pyc
+
+# Local SQLite databases
+*.db
+backend/cybertrace.db
+
+# Uploaded evidence files
+backend/uploads/
+uploads/
