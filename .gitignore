@@ -93,3 +93,9 @@ backend/cybertrace.db
 # Uploaded evidence files
 backend/uploads/
 uploads/
+
+# Local runner & database logs
+run_servers.py
+*.db-journal
+*.db-wal
+*.db-shm
