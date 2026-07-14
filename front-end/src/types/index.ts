@@ -1,6 +1,6 @@
 // All TypeScript interfaces for CyberTrace AI
 
-export type UserRole = 'officer' | 'supervisor' | 'admin';
+export type UserRole = 'citizen' | 'officer' | 'supervisor' | 'admin';
 
 export interface User {
   id: string;

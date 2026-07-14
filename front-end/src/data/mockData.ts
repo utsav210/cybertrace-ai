@@ -32,6 +32,16 @@ export const USERS: Record<string, { user: User; password: string }> = {
       role: 'supervisor',
     },
   },
+  'citizen.desai': {
+    password: 'citizen123',
+    user: {
+      id: 'u4',
+      username: 'citizen.desai',
+      name: 'Vikram Desai',
+      badgeNumber: 'CITIZEN/NCRP/8921',
+      role: 'citizen',
+    },
+  },
 };
 
 // ─── Cases ─────────────────────────────────────────────────────────────────────
