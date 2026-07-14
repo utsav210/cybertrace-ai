@@ -5,6 +5,7 @@ import {
   FolderOpen, ArrowRight, Banknote, User, Calendar, Plus
 } from 'lucide-react';
 import { useCaseStore } from '../store/caseStore';
+import { useThemeStore } from '../store/themeStore';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
@@ -18,6 +19,7 @@ const STATUS_BADGE: Record<string, string> = {
 export const CasesListPage: React.FC = () => {
   const { t } = useTranslation();
   const { cases, initializeCases } = useCaseStore();
+  const { theme } = useThemeStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export const CasesListPage: React.FC = () => {
             <FolderOpen size={22} className="text-amber-400" />
             {t('nav.cases')}
           </h1>
-          <p className="text-sm text-white/40 mt-0.5">{cases.length} cases in database</p>
+          <p className="text-sm text-white/40 mt-0.5">{cases.length} {t('case.casesInDb', 'cases in database')}</p>
         </div>
       </div>
 
@@ -48,14 +50,20 @@ export const CasesListPage: React.FC = () => {
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className="px-4 py-1.5 rounded-full text-sm font-medium transition-all border capitalize"
+            className="px-4 py-1.5 rounded-full text-sm font-medium transition-all border capitalize shadow-sm"
             style={{
-              background: statusFilter === s ? 'rgba(245,158,11,0.12)' : 'transparent',
-              borderColor: statusFilter === s ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.1)',
-              color: statusFilter === s ? '#F59E0B' : 'rgba(255,255,255,0.4)',
+              background: statusFilter === s
+                ? (theme === 'light' ? '#FEF3C7' : 'rgba(245,158,11,0.12)')
+                : (theme === 'light' ? '#FFFFFF' : 'transparent'),
+              borderColor: statusFilter === s
+                ? (theme === 'light' ? '#D97706' : 'rgba(245,158,11,0.4)')
+                : (theme === 'light' ? '#CBD5E1' : 'rgba(255,255,255,0.1)'),
+              color: statusFilter === s
+                ? (theme === 'light' ? '#B45309' : '#F59E0B')
+                : (theme === 'light' ? '#475569' : 'rgba(255,255,255,0.4)'),
             }}
           >
-            {s === 'all' ? 'All Cases' : t(`case.${s}`)} {s !== 'all' && `(${cases.filter(c => c.status === s).length})`}
+            {s === 'all' ? t('case.allCases', 'All Cases') : t(`case.${s}`)} {s !== 'all' && `(${cases.filter(c => c.status === s).length})`}
           </button>
         ))}
       </div>
@@ -73,7 +81,7 @@ export const CasesListPage: React.FC = () => {
               transition={{ delay: i * 0.06 }}
               onClick={() => navigate(`/cases/${c.id}`)}
               className="glass-card p-4 cursor-pointer group hover:border-amber-400/20 transition-all duration-200"
-              style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+              style={{ border: theme === 'light' ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.08)' }}
             >
               <div className="flex items-start justify-between mb-3">
                 <span className="font-mono text-xs text-amber-400 font-semibold">{c.caseNumber}</span>
@@ -98,7 +106,7 @@ export const CasesListPage: React.FC = () => {
               </div>
               <div className="mt-3 pt-3 border-t border-white/06 flex items-center justify-end">
                 <span className="text-xs text-white/30 group-hover:text-amber-400 flex items-center gap-1 transition-colors">
-                  View Case <ArrowRight size={11} />
+                  {t('portal.viewCase', 'View Case')} <ArrowRight size={11} />
                 </span>
               </div>
             </motion.div>

@@ -19,6 +19,7 @@ const SeverityBadge: React.FC<{ severity: FraudAlert['severity'] }> = ({ severit
 };
 
 const RiskGauge: React.FC<{ score: number }> = ({ score }) => {
+  const { t } = useTranslation();
   const color = score >= 75 ? '#DC2626' : score >= 50 ? '#F59E0B' : '#10B981';
   const radius = 28;
   const circumference = 2 * Math.PI * radius;
@@ -45,7 +46,7 @@ const RiskGauge: React.FC<{ score: number }> = ({ score }) => {
           {score}
         </text>
       </svg>
-      <span className="text-xs text-white/40">Risk Score</span>
+      <span className="text-xs text-white/40">{t('fraudFindings.riskScore', 'Risk Score')}</span>
     </div>
   );
 };
@@ -68,21 +69,21 @@ export const FraudFindingsTab: React.FC<Props> = ({ caseId }) => {
         <div className="stat-card px-4 py-2 flex items-center gap-2">
           <AlertTriangle size={14} className="text-red-400" />
           <div>
-            <div className="text-xs text-white/40">Total Alerts</div>
+            <div className="text-xs text-white/40">{t('fraudFindings.totalAlerts', 'Total Alerts')}</div>
             <div className="text-sm font-bold text-white">{caseAlerts.length}</div>
           </div>
         </div>
         <div className="stat-card px-4 py-2 flex items-center gap-2">
           <Check size={14} className="text-green-400" />
           <div>
-            <div className="text-xs text-white/40">Accepted</div>
+            <div className="text-xs text-white/40">{t('fraudFindings.acceptedCount', 'Accepted')}</div>
             <div className="text-sm font-bold text-green-400">{caseAlerts.filter(a => a.status === 'accepted').length}</div>
           </div>
         </div>
         <div className="stat-card px-4 py-2 flex items-center gap-2">
           <X size={14} className="text-red-400" />
           <div>
-            <div className="text-xs text-white/40">False Positives</div>
+            <div className="text-xs text-white/40">{t('fraudFindings.falsePositives', 'False Positives')}</div>
             <div className="text-sm font-bold text-red-400">{caseAlerts.filter(a => a.status === 'rejected').length}</div>
           </div>
         </div>

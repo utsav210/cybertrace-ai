@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { FileText, Download, Printer, X, Globe, Loader2, ClipboardList } from 'lucide-react';
 import type { Case } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { generateFIR_HTML } from '../../utils/generateFIR';
 
 interface Props { case_: Case }
 
@@ -30,7 +32,7 @@ AI-powered analysis of transaction data identified a complex money laundering ne
     ],
   },
   hi: {
-    summary: `यह जांच रिपोर्ट मामला संख्या CCB/2026/0001 – नकली KYC के माध्यम से UPI धोखाधड़ी से संबंधित है, जो शिकायतकर्ता विक्रम देसाई (फोन: +91 98765 43210, UPI: victim@upi) द्वारा दर्ज की गई है। शिकायतकर्ता को 1-3 मई 2026 के बीच कई धोखाधड़ी वाले UPI लेनदेन के माध्यम से ₹2,50,000 का वित्तीय नुकसान हुआ। धोखेबाज ने SBI बैंक अधिकारी "राजेश कुमार" का नाम लेकर KYC सत्यापन के बहाने पीड़ित को UPI क्रेडेंशियल साझा करने के लिए प्रेरित किया।
+    summary: `यह जांच रिपोर्ट मामला संख्या CCB/2026/0001 – नकली KYC के माध्यम से UPI धोखाधड़ी से संबंधित है, जो शिकायतकर्ता विक्रम देसाई (फोन: +91 98765 43210, UPI: victim@upi) द्वारा दर्ज की गई है। शिकायतकर्ता को 1-3 मई 2026 के बीच कई धोखाधड़ी वाले UPI लेनदेन के माध्यम से ₹2,50,000 का वित्तीय नुकसान हुआ।
 
 AI-आधारित लेनदेन विश्लेषण ने 4 बैंकों (ICICI, SBI, Axis, HDFC) में 5 खातों के साथ एक जटिल मनी लॉन्ड्रिंग नेटवर्क की पहचान की।`,
     findings: [
@@ -50,7 +52,7 @@ AI-आधारित लेनदेन विश्लेषण ने 4 ब�
     ],
   },
   gu: {
-    summary: `આ તપાસ અહેવાલ કેસ નં. CCB/2026/0001 – નકલી KYC દ્વારા UPI છેતરપિંડી સાથે સંબંધિત છે, જે ફરિયાદી વિક્રમ દેસાઈ (ફોન: +91 98765 43210, UPI: victim@upi) દ્વારા નોંધાઈ છે. ફરિયાદીને 1-3 મે 2026 ની વચ્ચે અનેક છેતરપિંડીભરી UPI ટ્રાન્ઝેક્શન દ્વારા ₹2,50,000 નું નુકસાન થયું. છેતરનારે SBI બૅન્ક અધિકારી "રાજેશ કુમાર" તરીકે ઓળખ આપી KYC ચકાસણીના બહાને UPI ઓળખ-ચોરી કરી.
+    summary: `આ તપાસ અહેવાલ કેસ નં. CCB/2026/0001 – નકલી KYC દ્વારા UPI છેતરપિંડી સાથે સંબંધિત છે. ફરિયાદીને 1-3 મે 2026 ની વચ્ચે ₹2,50,000 નું નુકસાન થયું.
 
 AI-આધારિત વ્યવહાર વિશ્લેષણે 4 બૅન્ક (ICICI, SBI, Axis, HDFC) ની 5 ખાતા ધરાવતી મની-લૉન્ડ્રિંગ નેટવર્ક ઓળખી.`,
     findings: [
@@ -66,64 +68,25 @@ AI-આધારિત વ્યવહાર વિશ્લેષણે 4 બૅ
       'ICICI, SBI, Axis, HDFC ને ધ. 91 CrPC હેઠળ કાયદેસર પ્રક્રિયા.',
       'IPC ધ. 420, IT Act ધ. 66C, 66D હેઠળ FIR.',
       'NPCI સાથે સહકાર – UPI IDs ફ્લૅગ.',
-      'ફરિયાદીને સાઇબર સ્વચ્છ૫ ાજાગૃ'
+      'ફરિયાદીને સાઇબર જાગૃતિ આપો.',
     ],
   },
 };
 
-const FIR_TEMPLATE = (caseNumber: string) => `
-FIRST INFORMATION REPORT (FIR)
-(Under Section 154 of Code of Criminal Procedure, 1973)
-
-District: Ahmedabad    Police Station: Cyber Crime Branch, Gujarat
-FIR No.: ${caseNumber}    Date/Time: ${new Date().toLocaleString('en-IN')}
-
-─────────────────────────────────────────────────────────────
-
-1. NATURE OF INFORMATION: Cognizable Offence
-
-2. NAME OF COMPLAINANT: Vikram Desai
-   Address: B-204, Shapath Hexa, S.G. Highway, Ahmedabad – 380054
-   Phone: +91 98765 43210 | Email: vikram@email.com
-
-3. DATE AND TIME OF INCIDENT: 01/05/2026, 10:00 AM to 03/05/2026
-
-4. PLACE OF OCCURRENCE: Cyber Space (UPI Network)
-
-5. DESCRIPTION OF OFFENCE:
-   The complainant, Vikram Desai, received a call from an unknown person 
-   posing as SBI Bank Officer "Rajesh Kumar". The accused convinced the 
-   complainant to update his KYC by providing UPI credentials. Subsequently, 
-   ₹2,50,000 was fraudulently transferred through multiple UPI transactions 
-   via mule accounts to conceal the trail.
-
-   Accused UPI IDs: fraudster@upi, mule1@icici, beneficiary@hdfc
-   Victim UPI: victim@upi | Account: 12345678901 | IFSC: SBIN0001234
-
-6. SECTIONS APPLIED:
-   • IPC Section 420 – Cheating and dishonestly inducing delivery of property
-   • IPC Section 419 – Cheating by personation
-   • IT Act Section 66C – Identity Theft (Punishment: 3 years, ₹1 lakh fine)
-   • IT Act Section 66D – Cheating by personation using computer resources
-
-7. AMOUNT INVOLVED: ₹2,50,000 (Rupees Two Lakhs Fifty Thousand only)
-
-8. INVESTIGATION OFFICER: Inspector Raj Patel
-   Badge No.: GUJ/CCB/1042 | Cyber Crime Branch, Ahmedabad
-
-─────────────────────────────────────────────────────────────
-SIGNATURE / THUMB IMPRESSION OF COMPLAINANT    SIGNATURE OF I.O.
-
-Vikram Desai                                   Raj Patel
-Date: ${new Date().toLocaleDateString('en-IN')}                      Inspector, CCB
-
-─────────────────────────────────────────────────────────────
-*This FIR is system-generated by CyberTrace AI v2.0 | CONFIDENTIAL*
-`;
-
 export const ReportTab: React.FC<Props> = ({ case_ }) => {
-  const { t } = useTranslation();
-  const [language, setLanguage] = useState<'en' | 'hi' | 'gu'>('en');
+  const { t, i18n } = useTranslation();
+  const currentLang = (i18n.language || 'en').slice(0, 2) as 'en' | 'hi' | 'gu';
+  const [language, setLanguage] = useState<'en' | 'hi' | 'gu'>(
+    ['en', 'hi', 'gu'].includes(currentLang) ? currentLang : 'en'
+  );
+
+  React.useEffect(() => {
+    const lang = (i18n.language || 'en').slice(0, 2) as 'en' | 'hi' | 'gu';
+    if (['en', 'hi', 'gu'].includes(lang)) {
+      setLanguage(lang);
+    }
+  }, [i18n.language]);
+
   const [generating, setGenerating] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showFIR, setShowFIR] = useState(false);
@@ -136,7 +99,7 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
   };
 
   const handlePrintReport = () => {
-    const report = REPORT_CONTENT[language];
+    const report = REPORT_CONTENT[language] || REPORT_CONTENT.en;
     const win = window.open('', '_blank');
     if (!win) return;
     win.document.write(`
@@ -146,36 +109,29 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
           <style>
             body { font-family: 'Times New Roman', serif; margin: 40px; color: #000; line-height: 1.6; }
             h1 { color: #1E3A8A; border-bottom: 2px solid #1E3A8A; padding-bottom: 8px; }
+            .meta { margin-bottom: 24px; color: #4B5563; font-size: 14px; }
             h2 { color: #1E3A8A; margin-top: 24px; }
-            .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-            .badge { background: #1E3A8A; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
-            ul { padding-left: 20px; }
-            li { margin: 8px 0; }
-            .footer { margin-top: 40px; border-top: 1px solid #ccc; padding-top: 16px; font-size: 12px; color: #666; }
-            .watermark { position: fixed; top: 40%; left: 20%; opacity: 0.06; font-size: 80px; transform: rotate(-30deg); color: #1E3A8A; font-weight: bold; pointer-events: none; }
+            ul { margin-left: 20px; }
+            li { margin-bottom: 8px; }
+            .footer { margin-top: 40px; border-top: 1px solid #D1D5DB; padding-top: 16px; font-size: 12px; color: #6B7280; }
           </style>
         </head>
         <body>
-          <div class="watermark">CONFIDENTIAL</div>
-          <div class="header">
-            <div>
-              <h1>Investigation Report</h1>
-              <p><strong>Case:</strong> ${case_.caseNumber} | <strong>Date:</strong> ${new Date().toLocaleDateString('en-IN')}</p>
-            </div>
-            <div class="badge">CyberTrace AI v2.0</div>
+          <h1>${t('report.title', 'CYBER CRIME BRANCH - INVESTIGATION REPORT')}</h1>
+          <div class="meta">
+            <strong>${t('case.caseNumber')}:</strong> ${case_.caseNumber}<br/>
+            <strong>${t('case.title')}:</strong> ${case_.title}<br/>
+            <strong>Date:</strong> ${new Date().toLocaleDateString('en-IN')}<br/>
+            <strong>Status:</strong> ${case_.status.toUpperCase()}
           </div>
-          <p><strong>Complainant:</strong> ${case_.complainant} | <strong>Phone:</strong> ${case_.complainantPhone}</p>
-          <p><strong>Amount Lost:</strong> ₹2,50,000 | <strong>Status:</strong> Under Investigation</p>
-          <hr/>
-          <h2>Executive Summary</h2>
+          <h2>${t('report.executiveSummary', '1. EXECUTIVE SUMMARY')}</h2>
           <p>${report.summary.replace(/\n/g, '<br>')}</p>
-          <h2>Key Findings</h2>
-          <ul>${report.findings.map(f => `<li>${f}</li>`).join('')}</ul>
-          <h2>Recommendations</h2>
-          <ul>${report.recommendations.map(r => `<li>${r}</li>`).join('')}</ul>
+          <h2>${t('report.keyFindings', '2. KEY FINDINGS')}</h2>
+          <ul>${report.findings.map((f) => `<li>${f}</li>`).join('')}</ul>
+          <h2>${t('report.recommendations', '3. RECOMMENDATIONS & NEXT STEPS')}</h2>
+          <ul>${report.recommendations.map((r) => `<li>${r}</li>`).join('')}</ul>
           <div class="footer">
-            <p>Generated by: Inspector Raj Patel (GUJ/CCB/1042) | Cyber Crime Branch, Gujarat</p>
-            <p>CyberTrace AI v2.0 | ${new Date().toLocaleString('en-IN')}</p>
+            Generated by CyberTrace AI Smart Policing Platform · Confidential Investigation Record
           </div>
         </body>
       </html>
@@ -187,26 +143,42 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
   const handlePrintFIR = () => {
     const win = window.open('', '_blank');
     if (!win) return;
-    win.document.write(`
-      <html>
-        <head>
-          <title>FIR - ${case_.caseNumber}</title>
-          <style>
-            body { font-family: 'Courier New', monospace; margin: 40px; color: #000; line-height: 1.8; font-size: 13px; }
-            h1 { text-align: center; font-size: 16px; text-decoration: underline; }
-            pre { white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <pre>${FIR_TEMPLATE(case_.caseNumber)}</pre>
-        </body>
-      </html>
-    `);
+    const html = generateFIR_HTML(case_, language);
+    win.document.write(html);
     win.document.close();
-    win.print();
   };
 
-  const report = REPORT_CONTENT[language];
+  const firPreviewLines = [
+    'FIRST INFORMATION REPORT (FIR)',
+    '(Under Section 154 CrPC, 1973 & Section 173 BNSS, 2023)',
+    '─'.repeat(54),
+    `District      : Ahmedabad, Gujarat`,
+    `Police Station: Cyber Crime Branch, Ahmedabad`,
+    `FIR No.       : ${case_.caseNumber}`,
+    `Date / Time   : ${new Date().toLocaleDateString('en-IN')} ${new Date().toLocaleTimeString('en-IN')}`,
+    '─'.repeat(54),
+    `Complainant   : ${case_.complainant || 'N/A'}`,
+    `Contact       : ${case_.complainantPhone || 'N/A'}`,
+    '─'.repeat(54),
+    `Nature        : ${case_.title}`,
+    `Description   : ${case_.description || 'To be ascertained.'}`,
+    '─'.repeat(54),
+    `Amount Involved: ${case_.amountLost ? '₹' + Number(case_.amountLost).toLocaleString('en-IN') : 'To be ascertained'}`,
+    `Place         : Cyber Space / Online Platform`,
+    '─'.repeat(54),
+    'Sections Applied:',
+    '  • IPC Sec 419 – Cheating by Personation',
+    '  • IPC Sec 420 – Cheating',
+    '  • IT Act Sec 66C – Identity Theft',
+    '  • IT Act Sec 66D – Cheating by Personation (Cyber)',
+    '─'.repeat(54),
+    'I.O.: Inspector Raj Patel (Badge: GUJ/CCB/1042)',
+    '      Cyber Crime Branch, Ahmedabad, Gujarat Police',
+    '─'.repeat(54),
+    '* Click "Print / Download" for full formatted FIR *',
+  ].join('\n');
+
+  const report = REPORT_CONTENT[language] || REPORT_CONTENT.en;
   const langLabels = { en: 'English', hi: 'Hindi', gu: 'Gujarati' };
 
   return (
@@ -228,7 +200,7 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
               style={{ background: language === lang ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.03)' }}
             >
               <input type="radio" name="language" value={lang} checked={language === lang}
-                onChange={() => setLanguage(lang)} className="hidden" />
+                onChange={() => { setLanguage(lang); i18n.changeLanguage(lang); }} className="hidden" />
               <div className={clsx('w-4 h-4 rounded-full border-2 flex items-center justify-center',
                 language === lang ? 'border-amber-400' : 'border-white/20'
               )}>
@@ -381,48 +353,51 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
       </AnimatePresence>
 
       {/* FIR Modal */}
-      <AnimatePresence>
-        {showFIR && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowFIR(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-modal w-full max-w-2xl relative z-10 p-6 max-h-[85vh] flex flex-col"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-base">{t('report.firTitle')}</h3>
-                <button onClick={() => setShowFIR(false)} className="p-2 hover:bg-white/10 rounded-lg">
-                  <X size={16} />
-                </button>
-              </div>
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showFIR && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={() => setShowFIR(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="glass-modal w-full max-w-2xl relative z-10 p-6 max-h-[85vh] flex flex-col shadow-2xl"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-base">{t('report.firTitle')}</h3>
+                  <button onClick={() => setShowFIR(false)} className="p-2 hover:bg-white/10 rounded-lg">
+                    <X size={16} />
+                  </button>
+                </div>
 
-              <div className="flex-1 overflow-y-auto">
-                <pre className="text-xs text-white/75 whitespace-pre-wrap leading-relaxed font-mono p-4 rounded-lg"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  {FIR_TEMPLATE(case_.caseNumber)}
-                </pre>
-              </div>
+                <div className="flex-1 overflow-y-auto">
+                  <pre className="text-xs text-white/75 whitespace-pre-wrap leading-relaxed font-mono p-4 rounded-lg"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    {firPreviewLines}
+                  </pre>
+                </div>
 
-              <div className="flex gap-3 mt-4">
-                <button onClick={() => setShowFIR(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:text-white border border-white/10 hover:bg-white/05 transition-all">
-                  {t('modal.cancel')}
-                </button>
-                <button onClick={handlePrintFIR} className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 btn-accent">
-                  <Download size={14} /> {t('report.firDownload')}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                <div className="flex gap-3 mt-4">
+                  <button onClick={() => setShowFIR(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:text-white border border-white/10 hover:bg-white/05 transition-all">
+                    {t('modal.cancel')}
+                  </button>
+                  <button onClick={handlePrintFIR} className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 btn-accent">
+                    <Download size={14} /> {t('report.firDownload')}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

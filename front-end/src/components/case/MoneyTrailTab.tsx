@@ -478,25 +478,25 @@ export const MoneyTrailTab: React.FC = () => {
                   {selectedNode.type === 'mule' && (
                     <span className="inline-flex items-center gap-1 text-xs text-red-400 px-2.5 py-1 rounded-full border border-red-400/30"
                       style={{ background: 'rgba(220,38,38,0.12)' }}>
-                      <AlertTriangle size={10} /> Mule Account
+                      <AlertTriangle size={10} /> {t('moneyTrail.muleAccount', 'Mule Account')}
                     </span>
                   )}
                   {selectedNode.type === 'victim' && (
                     <span className="inline-flex items-center gap-1 text-xs text-blue-400 px-2.5 py-1 rounded-full border border-blue-400/30"
                       style={{ background: 'rgba(59,130,246,0.12)' }}>
-                      <Info size={10} /> Victim
+                      <Info size={10} /> {t('moneyTrail.victim', 'Victim')}
                     </span>
                   )}
                   {selectedNode.type === 'beneficiary' && (
                     <span className="inline-flex items-center gap-1 text-xs text-orange-400 px-2.5 py-1 rounded-full border border-orange-400/30"
                       style={{ background: 'rgba(234,88,12,0.12)' }}>
-                      <AlertTriangle size={10} /> Final Beneficiary
+                      <AlertTriangle size={10} /> {t('moneyTrail.finalBeneficiary', 'Final Beneficiary')}
                     </span>
                   )}
                   {selectedNode.type === 'unknown' && (
                     <span className="inline-flex items-center gap-1 text-xs text-purple-400 px-2.5 py-1 rounded-full border border-purple-400/30"
                       style={{ background: 'rgba(167,139,250,0.12)' }}>
-                      Unknown Account
+                      {t('moneyTrail.unknownAccount', 'Unknown Account')}
                     </span>
                   )}
                 </div>
@@ -564,8 +564,8 @@ export const MoneyTrailTab: React.FC = () => {
                   👆
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white/50">Click any node</p>
-                  <p className="text-xs text-white/25 mt-1">to see account details,<br />risk score & flow data</p>
+                  <p className="text-sm font-semibold text-white/50">{t('moneyTrail.clickNode', 'Click any node')}</p>
+                  <p className="text-xs text-white/25 mt-1">{t('moneyTrail.clickNodeHint', 'to see account details, risk score & flow data')}</p>
                 </div>
                 <div className="mt-2 space-y-1.5 text-left w-full">
                   {graphNodes.map((n) => (

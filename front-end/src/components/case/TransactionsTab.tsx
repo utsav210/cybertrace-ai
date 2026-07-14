@@ -65,7 +65,7 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
             <div className="stat-card px-4 py-2 flex items-center gap-2">
               <AlertTriangle size={14} className="text-red-400" />
               <div>
-                <div className="text-xs text-white/40">Suspicious</div>
+                <div className="text-xs text-white/40">{t('transactions.suspicious', 'Suspicious')}</div>
                 <div className="text-sm font-bold text-red-400">{suspiciousCount}</div>
               </div>
             </div>
@@ -159,8 +159,8 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
       ) : !transactionsLoaded ? (
         <div className="text-center py-16 glass-card">
           <Database size={48} className="mx-auto mb-4 text-white/20" />
-          <p className="text-white/40 text-sm">No transactions imported yet.</p>
-          <p className="text-white/25 text-xs mt-1">Click "Import CSV" to load bank statement data.</p>
+          <p className="text-white/40 text-sm">{t('transactions.noTransactions', 'No transactions imported yet.')}</p>
+          <p className="text-white/25 text-xs mt-1">{t('transactions.importHint', 'Click "Import CSV" to load bank statement data.')}</p>
         </div>
       ) : null}
 
@@ -202,12 +202,12 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
                   <div className="drop-zone flex flex-col items-center gap-2 cursor-pointer transition-colors hover:bg-white/[0.02]">
                     <Upload size={24} className={selectedFile ? "text-green-400" : "text-amber-400"} />
                     <p className="text-sm text-white/60">
-                      {selectedFile ? selectedFile.name : "Click or drag CSV file to upload"}
+                      {selectedFile ? selectedFile.name : t('transactions.clickOrDrag', 'Click or drag CSV file to upload')}
                     </p>
                     {selectedFile && (
                       <p className="text-xs text-green-400 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                        Ready to import ({(selectedFile.size / 1024).toFixed(1)} KB)
+                        {t('transactions.readyToImport', 'Ready to import')} ({(selectedFile.size / 1024).toFixed(1)} KB)
                       </p>
                     )}
                   </div>
@@ -235,7 +235,7 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
                     style={{ background: 'rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
                   >
                     <Database size={13} className="text-blue-400" />
-                    <span className="text-xs font-bold text-white/80 uppercase tracking-wider">Column Mapping Preview</span>
+                    <span className="text-xs font-bold text-white/80 uppercase tracking-wider">{t('transactions.mappingPreview', 'Column Mapping Preview')}</span>
                   </div>
                   {/* rows */}
                   <div className="divide-y" style={{ background: 'rgba(10,20,50,0.6)' }}>

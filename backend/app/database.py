@@ -6,9 +6,14 @@ import json
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cybertrace.db")
 
 def get_db_connection():
-    """Returns a parameterized sqlite3 connection with dict-like row access."""
-    conn = sqlite3.connect(DB_PATH)
+    """Returns a parameterized sqlite3 connection with dict-like row access.
+    Uses a 30-second lock timeout and WAL mode to prevent 'database is locked'
+    errors when multiple Flask workers or seed scripts access the DB simultaneously.
+    """
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
+    # Enable WAL mode for better concurrency (readers don't block writers)
+    conn.execute("PRAGMA journal_mode=WAL;")
     # Enable foreign keys
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
@@ -139,7 +144,62 @@ def initialize_database():
     );
     """)
 
+    # 9. Create Citizen Complaints Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS citizen_complaints (
+        id TEXT PRIMARY KEY,
+        created_at TEXT NOT NULL,
+        complainant_name TEXT NOT NULL,
+        complainant_phone TEXT NOT NULL,
+        category TEXT NOT NULL,
+        description TEXT NOT NULL,
+        amount_lost REAL DEFAULT 0.0,
+        status TEXT NOT NULL,
+        assigned_case_id TEXT
+    );
+    """)
+
+    # 10. Create System Settings Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS system_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+    );
+    """)
+
     conn.commit()
+
+    # Ensure settings default row exists
+    cursor.execute("SELECT COUNT(*) FROM system_settings WHERE key = 'config';")
+    if cursor.fetchone()[0] == 0:
+        default_config = {
+            "entityConfidence": 85,
+            "autoTriage": True,
+            "ocrSensitivity": "High",
+            "defaultLanguage": "en",
+            "connectors": {
+                "i4c_1930": {"status": "Connected", "lastSync": "Today, 10:42 AM", "records": "1,420 Flagged Accounts"},
+                "ncrp_portal": {"status": "Connected", "lastSync": "Today, 11:15 AM", "records": "890 Active Tickets"},
+                "cctns_db": {"status": "Connected", "lastSync": "Yesterday, 04:30 PM", "records": "Linked to Crime Branch"},
+                "npci_upi": {"status": "Connected", "lastSync": "Real-time Webhook", "records": "NCPR Nodal Gateway"}
+            },
+            "sessionTimeout": 30,
+            "twoFactor": True
+        }
+        cursor.execute("INSERT INTO system_settings (key, value) VALUES ('config', ?);", (json.dumps(default_config),))
+        conn.commit()
+
+    # Ensure sample citizen complaints exist
+    cursor.execute("SELECT COUNT(*) FROM citizen_complaints;")
+    if cursor.fetchone()[0] == 0:
+        sample_complaints = [
+            ("NCRP-2026-88912", "2026-07-14T09:15:00Z", "Vikram Desai", "+91 98765 43210", "Financial Fraud / UPI Scam", "Received call from fake SBI officer asking for KYC update via SMS link. ₹2,50,000 debited.", 250000.0, "FIR Registered (CCB/2026/0001)", "case-001"),
+            ("NCRP-2026-89104", "2026-07-14T10:30:00Z", "Meena Joshi", "+91 99887 76655", "Online Shopping / Fake OTP", "Tricked into sharing OTP for parcel delivery. ₹45,000 deducted.", 45000.0, "Assigned to Investigation Officer", "case-002"),
+            ("NCRP-2026-89240", "2026-07-14T11:45:00Z", "Amit Shah", "+91 91234 56789", "Social Media Impersonation", "Relative's fake Facebook account created demanding emergency medical funds.", 30000.0, "Received - Under Triage", "case-003"),
+            ("NCRP-2026-89551", "2026-07-14T12:20:00Z", "Neha Verma", "+91 94221 11223", "Investment / Crypto Scam", "Added to Telegram group promising 300% daily returns on Bitcoin cloud mining.", 120000.0, "Received - Under Triage", None)
+        ]
+        cursor.executemany("INSERT INTO citizen_complaints VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", sample_complaints)
+        conn.commit()
 
     # Seed initial data if table is empty
     cursor.execute("SELECT COUNT(*) FROM users;")

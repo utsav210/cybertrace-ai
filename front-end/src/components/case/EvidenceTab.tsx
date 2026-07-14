@@ -93,7 +93,7 @@ export const EvidenceTab: React.FC<Props> = ({ caseId }) => {
               animate={{ opacity: 1, scale: 1 }}
               className="text-amber-400 text-sm font-semibold"
             >
-              Drop to upload!
+              {t('evidence.dropToUpload', 'Drop to upload!')}
             </motion.p>
           )}
         </div>
@@ -112,7 +112,7 @@ export const EvidenceTab: React.FC<Props> = ({ caseId }) => {
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
-              <span className="text-sm text-blue-300">Uploading & processing evidence...</span>
+              <span className="text-sm text-blue-300">{t('evidence.uploadingMsg', 'Uploading & processing evidence...')}</span>
             </div>
             <div className="risk-bar-wrapper">
               <motion.div
@@ -131,7 +131,7 @@ export const EvidenceTab: React.FC<Props> = ({ caseId }) => {
       {caseEvidence.length > 0 ? (
         <div>
           <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">
-            Uploaded Files ({caseEvidence.length})
+            {t('evidence.uploadedFiles', 'Uploaded Files')} ({caseEvidence.length})
           </h3>
           <div className="glass-card overflow-hidden">
             <table className="data-table">
@@ -140,7 +140,7 @@ export const EvidenceTab: React.FC<Props> = ({ caseId }) => {
                   <th>{t('evidence.fileName')}</th>
                   <th>{t('evidence.type')}</th>
                   <th>{t('evidence.size')}</th>
-                  <th>OCR Status</th>
+                  <th>{t('evidence.ocrStatus', 'OCR Status')}</th>
                   <th>{t('evidence.uploaded')}</th>
                   <th>{t('evidence.actions') || 'Actions'}</th>
                 </tr>
@@ -164,7 +164,7 @@ export const EvidenceTab: React.FC<Props> = ({ caseId }) => {
                     <td>
                       {ev.ocrStatus === 'completed' && (
                         <span className="flex items-center gap-1 text-xs text-green-400">
-                          <CheckCircle size={12} /> Complete
+                          <CheckCircle size={12} /> {t('evidence.ocrComplete', 'Complete')}
                         </span>
                       )}
                       {ev.ocrStatus === 'processing' && (
@@ -174,7 +174,7 @@ export const EvidenceTab: React.FC<Props> = ({ caseId }) => {
                         </span>
                       )}
                       {ev.ocrStatus === 'pending' && (
-                        <span className="text-xs text-white/30">Pending</span>
+                        <span className="text-xs text-white/30">{t('evidence.ocrPending', 'Pending')}</span>
                       )}
                     </td>
                     <td className="text-white/40 text-xs">

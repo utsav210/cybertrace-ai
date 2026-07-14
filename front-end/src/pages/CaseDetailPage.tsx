@@ -66,10 +66,10 @@ export const CaseDetailPage: React.FC = () => {
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-white/40">
         <button onClick={() => navigate('/dashboard')} className="hover:text-white transition-colors flex items-center gap-1">
-          <ArrowLeft size={14} /> Dashboard
+          <ArrowLeft size={14} /> {t('nav.dashboard', 'Dashboard')}
         </button>
         <ChevronRight size={13} />
-        <button onClick={() => navigate('/cases')} className="hover:text-white transition-colors">Cases</button>
+        <button onClick={() => navigate('/cases')} className="hover:text-white transition-colors">{t('nav.cases', 'Cases')}</button>
         <ChevronRight size={13} />
         <span className="text-amber-400 font-mono">{case_.caseNumber}</span>
       </div>
@@ -91,7 +91,7 @@ export const CaseDetailPage: React.FC = () => {
               style={{ background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.25)' }}>
               <Banknote size={16} className="text-red-400" />
               <div>
-                <div className="text-xs text-white/40">Amount Lost</div>
+                <div className="text-xs text-white/40">{t('case.amountLost', 'Amount Lost')}</div>
                 <div className="font-bold text-red-400">{formatAmount(case_.amountLost)}</div>
               </div>
             </div>

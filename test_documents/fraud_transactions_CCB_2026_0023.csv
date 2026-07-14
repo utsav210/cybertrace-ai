@@ -1,0 +1,14 @@
+date,sender,receiver,amount,narration,suspicious
+2026-07-08 11:24:33,rajesh.sharma@okicici,mule1@icici,200000,UPI/PhonePe/KYC Verification/Ref001,true
+2026-07-08 11:26:14,rajesh.sharma@okicici,mule2@sbi,150000,UPI/PhonePe/Account Verify/Ref002,true
+2026-07-08 11:29:05,rajesh.sharma@okicici,mule3@axis,132000,UPI/PhonePe/Update Limit/Ref003,true
+2026-07-08 11:48:10,mule1@icici,mule3@axis,90000,IMPS/Cash Out Layer 2,true
+2026-07-08 12:03:22,mule2@sbi,beneficiary@hdfc,120000,NEFT/Business Payment/Textile,true
+2026-07-08 12:17:45,mule3@axis,beneficiary@hdfc,185000,NEFT/Merchant Settlement,true
+2026-07-08 13:55:00,beneficiary@hdfc,mule1@icici,40000,UPI/Return Transfer/Ref009,true
+2026-07-08 14:30:15,mule1@icici,beneficiary@hdfc,125000,IMPS/Final Settlement,true
+2026-07-09 09:14:00,victim2@sbi,mule1@icici,75000,UPI/Lucky Draw Prize Fee,true
+2026-07-09 09:45:22,victim3@paytm,mule2@sbi,50000,UPI/Insurance Premium Update,true
+2026-07-10 10:00:00,mule3@axis,mule1@icici,30000,IMPS/Smurfing Split 1,true
+2026-07-10 10:05:00,mule3@axis,mule2@sbi,30000,IMPS/Smurfing Split 2,true
+2026-07-10 10:10:00,mule3@axis,beneficiary@hdfc,30000,IMPS/Smurfing Split 3,true

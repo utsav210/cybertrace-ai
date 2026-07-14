@@ -85,9 +85,9 @@ export const EntitiesTab: React.FC<Props> = ({ caseId }) => {
         ))}
 
         <div className="ml-auto flex items-center gap-3 text-xs text-white/30">
-          <span>{filtered.length} entities</span>
-          <span className="text-green-400">{filtered.filter((e) => e.status === 'accepted').length} accepted</span>
-          <span className="text-red-400">{filtered.filter((e) => e.status === 'rejected').length} rejected</span>
+          <span>{filtered.length} {t('entities.entitiesCount', 'entities')}</span>
+          <span className="text-green-400">{filtered.filter((e) => e.status === 'accepted').length} {t('entities.acceptedCount', 'accepted')}</span>
+          <span className="text-red-400">{filtered.filter((e) => e.status === 'rejected').length} {t('entities.rejectedCount', 'rejected')}</span>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export const EntitiesTab: React.FC<Props> = ({ caseId }) => {
                           {entity.status === 'accepted' && (
                             <span className="flex items-center gap-1 text-xs text-green-400 px-1.5 py-0.5 rounded-full border border-green-400/30"
                               style={{ background: 'rgba(16,185,129,0.1)' }}>
-                              <ShieldCheck size={10} /> Verified
+                              <ShieldCheck size={10} /> {t('entities.verified', 'Verified')}
                             </span>
                           )}
                         </div>

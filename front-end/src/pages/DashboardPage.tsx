@@ -276,7 +276,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-3 flex items-center gap-1 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
               <AlertTriangle size={11} />
-              <span>As of {new Date().toLocaleDateString('en-IN')}</span>
+              <span>{t('dashboard.asOf', 'As of')} {new Date().toLocaleDateString('en-IN')}</span>
             </div>
           </motion.div>
         ))}
@@ -294,13 +294,13 @@ export const DashboardPage: React.FC = () => {
           >
             <CheckCircle size={18} className="text-green-400 flex-shrink-0" />
             <div className="flex-1 text-sm text-green-300">
-              Case <strong>{recentCreated.caseNumber}</strong> – "{recentCreated.title}" created successfully!
+              Case <strong>{recentCreated.caseNumber}</strong> – "{recentCreated.title}" {t('dashboard.createdSuccess', 'created successfully!')}
             </div>
             <button
               onClick={() => navigate(`/cases/${recentCreated.id}`)}
               className="text-xs text-green-400 hover:text-green-300 flex items-center gap-1 transition-colors"
             >
-              View Case <ArrowRight size={12} />
+              {t('portal.viewCase', 'View Case')} <ArrowRight size={12} />
             </button>
             <button onClick={() => setRecentCreated(null)} className="p-1 hover:bg-white/10 rounded transition-colors">
               <X size={14} className="text-white/40" />
@@ -317,7 +317,7 @@ export const DashboardPage: React.FC = () => {
             onClick={() => navigate('/cases')}
             className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors"
           >
-            View All <ArrowRight size={12} />
+            {t('dashboard.viewAll', 'View All')} <ArrowRight size={12} />
           </button>
         </div>
 
