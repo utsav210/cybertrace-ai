@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useCaseStore } from '../store/caseStore';
+import { useNotificationStore } from '../store/notificationStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Case } from '../types';
 import clsx from 'clsx';
@@ -55,7 +56,7 @@ const CreateCaseModal: React.FC<{ onClose: () => void; onCreated: (c: Case) => v
     if (!form.title.trim()) return;
     setCreating(true);
     await new Promise((r) => setTimeout(r, 1000));
-    const newCase = addCase({
+    const newCase = await addCase({
       title: form.title,
       description: form.description,
       complainant: form.complainant || 'Unknown',
@@ -175,8 +176,14 @@ const CreateCaseModal: React.FC<{ onClose: () => void; onCreated: (c: Case) => v
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { cases } = useCaseStore();
+  const { cases, initializeCases } = useCaseStore();
+  const { initializeNotifications } = useNotificationStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    initializeCases();
+    initializeNotifications();
+  }, [initializeCases, initializeNotifications]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [recentCreated, setRecentCreated] = useState<Case | null>(null);

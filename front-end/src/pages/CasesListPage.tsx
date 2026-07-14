@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useCaseStore } from '../store/caseStore';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -17,8 +17,12 @@ const STATUS_BADGE: Record<string, string> = {
 
 export const CasesListPage: React.FC = () => {
   const { t } = useTranslation();
-  const { cases } = useCaseStore();
+  const { cases, initializeCases } = useCaseStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    initializeCases();
+  }, [initializeCases]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'active' | 'closed'>('all');
 
   const filtered = statusFilter === 'all' ? cases : cases.filter((c) => c.status === statusFilter);

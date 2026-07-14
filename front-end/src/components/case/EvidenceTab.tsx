@@ -37,44 +37,22 @@ const FileIcon: React.FC<{ type: Evidence['fileType'] }> = ({ type }) => {
 
 export const EvidenceTab: React.FC<Props> = ({ caseId }) => {
   const { t } = useTranslation();
-  const { evidence, addEvidence, updateEvidenceOcrStatus } = useCaseStore();
+  const { evidence, uploadEvidence } = useCaseStore();
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [showOcr, setShowOcr] = useState<string | null>(null);
 
   const caseEvidence = evidence.filter((e) => e.caseId === caseId);
 
   const simulateUpload = async (file: File) => {
-    const id = `ev-${Date.now()}`;
-    const ext = file.name.split('.').pop()?.toLowerCase() || '';
-    const type: Evidence['fileType'] =
-      ext === 'pdf' ? 'pdf' : ext === 'csv' ? 'csv' : ['png', 'jpg', 'jpeg'].includes(ext) ? 'image' : 'other';
-
-    const newEv: Evidence = {
-      id,
-      caseId,
-      fileName: file.name,
-      fileType: type,
-      fileSize: `${(file.size / 1024).toFixed(1)} KB`,
-      hash: `sha256:${Math.random().toString(36).slice(2).repeat(4).slice(0, 63)}`,
-      uploadedAt: new Date().toISOString(),
-      ocrStatus: 'pending',
-    };
-
-    addEvidence(newEv);
-
-    // Simulate upload progress
-    for (let p = 0; p <= 100; p += 20) {
-      setUploadProgress((prev) => ({ ...prev, [id]: p }));
-      await new Promise((r) => setTimeout(r, 200));
-    }
-
-    // Simulate OCR for PDF/image
-    if (type === 'pdf' || type === 'image') {
-      updateEvidenceOcrStatus(id, 'processing');
-      await new Promise((r) => setTimeout(r, 2500));
-      updateEvidenceOcrStatus(id, 'completed', OCR_SAMPLE);
-    }
-
+    const id = `ev-up-${Date.now()}`;
+    // Show initial progress indicator
+    setUploadProgress((prev) => ({ ...prev, [id]: 10 }));
+    
+    // Upload file to Python backend
+    await uploadEvidence(caseId, file);
+    
+    setUploadProgress((prev) => ({ ...prev, [id]: 100 }));
+    await new Promise((r) => setTimeout(r, 200));
     setUploadProgress((prev) => {
       const n = { ...prev };
       delete n[id];

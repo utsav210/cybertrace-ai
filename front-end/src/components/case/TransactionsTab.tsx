@@ -25,7 +25,7 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
 
   const handleImport = async () => {
     setImporting(true);
-    await importTransactions();
+    await importTransactions(caseId);
     setImporting(false);
     setShowImportModal(false);
   };

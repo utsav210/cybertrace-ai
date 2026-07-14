@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Maximize2, AlertTriangle, Info, TrendingUp, TrendingDown, X } from 'lucide-react';
-import { GRAPH_NODES, GRAPH_LINKS } from '../../data/mockData';
-import type { GraphNode } from '../../types';
+import { useCaseStore } from '../../store/caseStore';
+import type { GraphNode, GraphLink } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -27,30 +27,19 @@ const formatINR = (n: number) =>
 
 const riskColor = (s: number) => s >= 75 ? '#DC2626' : s >= 50 ? '#F59E0B' : '#10B981';
 
-// ── Aggregate duplicate edges ──────────────────────────────────────────────────
-const AGG_LINKS = (() => {
-  const map = new Map<string, { source: string; target: string; totalAmount: number; circular: boolean }>();
-  GRAPH_LINKS.forEach((l) => {
-    const key = `${l.source}||${l.target}`;
-    const ex = map.get(key);
-    if (ex) { ex.totalAmount += l.amount; if (l.circular) ex.circular = true; }
-    else map.set(key, { source: l.source, target: l.target, totalAmount: l.amount, circular: !!l.circular });
-  });
-  return Array.from(map.values());
-})();
-
 // ── Force layout: runs until stable, returns positions fitted to viewport ──────
-function computeLayout(W: number, H: number): NodePos[] {
+function computeLayout(nodes: GraphNode[], links: { source: string; target: string; totalAmount: number; circular: boolean }[], W: number, H: number): NodePos[] {
+  if (nodes.length === 0) return [];
   const MARGIN = 80;
   const cx = W / 2, cy = H / 2;
   // Place victim at center, others on a circle
-  const others = GRAPH_NODES.filter((n) => n.type !== 'victim');
-  const victim = GRAPH_NODES.find((n) => n.type === 'victim');
+  const others = nodes.filter((n) => n.type !== 'victim');
+  const victim = nodes.find((n) => n.type === 'victim');
 
-  const pos: (NodePos & { vx: number; vy: number })[] = GRAPH_NODES.map((n, i) => {
+  const pos: (NodePos & { vx: number; vy: number })[] = nodes.map((n, i) => {
     if (n.type === 'victim') return { id: n.id, x: cx, y: cy, vx: 0, vy: 0 };
     const idx = others.indexOf(n);
-    const angle = (idx / others.length) * 2 * Math.PI - Math.PI / 2;
+    const angle = others.length ? (idx / others.length) * 2 * Math.PI - Math.PI / 2 : 0;
     const r = Math.min(W, H) * 0.3;
     return { id: n.id, x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), vx: 0, vy: 0 };
   });
@@ -73,7 +62,7 @@ function computeLayout(W: number, H: number): NodePos[] {
     }
 
     // Link attraction
-    AGG_LINKS.forEach((l) => {
+    links.forEach((l) => {
       const s = posMap.get(l.source), t = posMap.get(l.target);
       if (!s || !t) return;
       const dx = t.x - s.x, dy = t.y - s.y;
@@ -127,6 +116,7 @@ function edgePath(sx: number, sy: number, tx: number, ty: number, curve: number,
 // ── Component ──────────────────────────────────────────────────────────────────
 export const MoneyTrailTab: React.FC = () => {
   const { t } = useTranslation();
+  const { graphNodes, graphLinks } = useCaseStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dims, setDims] = useState({ w: 700, h: 480 });
   const [positions, setPositions] = useState<NodePos[]>([]);
@@ -137,6 +127,24 @@ export const MoneyTrailTab: React.FC = () => {
 
   // Node dragging state
   const draggingNode = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
+
+  // ── Aggregate duplicate edges dynamically ─────────────────────────────────────
+  const aggLinks = useMemo(() => {
+    const map = new Map<string, { source: string; target: string; totalAmount: number; circular: boolean }>();
+    graphLinks.forEach((l) => {
+      const sId = typeof l.source === 'object' ? (l.source as any).id : l.source;
+      const tId = typeof l.target === 'object' ? (l.target as any).id : l.target;
+      const key = `${sId}||${tId}`;
+      const ex = map.get(key);
+      if (ex) {
+        ex.totalAmount += l.amount;
+        if (l.circular) ex.circular = true;
+      } else {
+        map.set(key, { source: sId, target: tId, totalAmount: l.amount, circular: !!l.circular });
+      }
+    });
+    return Array.from(map.values());
+  }, [graphLinks]);
 
   // ── Measure container ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -152,11 +160,11 @@ export const MoneyTrailTab: React.FC = () => {
     return () => ro.disconnect();
   }, []);
 
-  // ── Compute layout once container is measured ────────────────────────────────
+  // ── Compute layout once container is measured or nodes/links change ───────────
   useEffect(() => {
-    if (dims.w < 100) return;
-    setPositions(computeLayout(dims.w, dims.h));
-  }, [dims.w, dims.h]);
+    if (dims.w < 100 || graphNodes.length === 0) return;
+    setPositions(computeLayout(graphNodes, aggLinks, dims.w, dims.h));
+  }, [dims.w, dims.h, graphNodes, aggLinks]);
 
   // ── Pulse animation loop ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -291,25 +299,24 @@ export const MoneyTrailTab: React.FC = () => {
             </defs>
 
             {/* ── Edges ──────────────────────────────────────────────────────── */}
-            {AGG_LINKS.map((link, i) => {
+            {aggLinks.map((link, i) => {
               const src = posMap.get(link.source);
               const tgt = posMap.get(link.target);
               if (!src || !tgt) return null;
 
-              const srcNode = GRAPH_NODES.find((n) => n.id === link.source);
-              const tgtNode = GRAPH_NODES.find((n) => n.id === link.target);
+              const srcNode = graphNodes.find((n) => n.id === link.source);
+              const tgtNode = graphNodes.find((n) => n.id === link.target);
               const rS = NODE_RADIUS[srcNode?.type || 'unknown'] || 22;
               const rT = NODE_RADIUS[tgtNode?.type || 'unknown'] || 22;
 
               // Offset parallel edges
-              const sameDir = AGG_LINKS.filter((l) => l.source === link.source && l.target === link.target);
-              const revDir  = AGG_LINKS.filter((l) => l.source === link.target && l.target === link.source);
+              const sameDir = aggLinks.filter((l) => l.source === link.source && l.target === link.target);
+              const revDir  = aggLinks.filter((l) => l.source === link.target && l.target === link.source);
               const hasRev  = revDir.length > 0;
               const idx     = sameDir.indexOf(link);
               const curve   = link.circular ? 0.25 : hasRev ? (idx % 2 === 0 ? 0.18 : -0.18) : 0;
 
               const d = edgePath(src.x, src.y, tgt.x, tgt.y, curve, rS + 2, rT + 8);
-              const mid = edgePath(src.x, src.y, tgt.x, tgt.y, curve, rS + 2, rT + 8);
 
               return (
                 <g key={`e-${i}`}>
@@ -338,7 +345,7 @@ export const MoneyTrailTab: React.FC = () => {
             })}
 
             {/* ── Nodes ──────────────────────────────────────────────────────── */}
-            {GRAPH_NODES.map((node) => {
+            {graphNodes.map((node) => {
               const pos = posMap.get(node.id);
               if (!pos) return null;
               const color    = NODE_COLORS[node.type] || '#94a3b8';
@@ -559,7 +566,7 @@ export const MoneyTrailTab: React.FC = () => {
                   <p className="text-xs text-white/25 mt-1">to see account details,<br />risk score & flow data</p>
                 </div>
                 <div className="mt-2 space-y-1.5 text-left w-full">
-                  {GRAPH_NODES.map((n) => (
+                  {graphNodes.map((n) => (
                     <button
                       key={n.id}
                       onClick={() => setSelectedNode(n)}

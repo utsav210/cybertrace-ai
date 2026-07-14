@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -25,7 +25,13 @@ export const CaseDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { cases, entities, fraudAlerts } = useCaseStore();
+  const { cases, entities, fraudAlerts, loadCaseDetails } = useCaseStore();
+
+  useEffect(() => {
+    if (id) {
+      loadCaseDetails(id);
+    }
+  }, [id, loadCaseDetails]);
 
   const [activeTab, setActiveTab] = useState(0);
 
