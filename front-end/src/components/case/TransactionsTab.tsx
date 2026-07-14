@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Upload, X, AlertTriangle, TrendingUp, Database } from 'lucide-react';
 import { useCaseStore } from '../../store/caseStore';
@@ -162,136 +163,139 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
       ) : null}
 
       {/* Import Modal */}
-      <AnimatePresence>
-        {showImportModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => !importing && setShowImportModal(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-modal w-full max-w-md relative z-10 p-6 max-h-[90vh] overflow-y-auto"
-            >
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-base font-bold">{t('transactions.importCSV')}</h3>
-                {!importing && (
-                  <button onClick={() => setShowImportModal(false)} className="p-2 hover:bg-white/10 rounded-lg">
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-
-              {/* Upload Area */}
-              <div className="drop-zone mb-4 cursor-default">
-                <div className="flex flex-col items-center gap-2">
-                  <Upload size={24} className="text-amber-400" />
-                  <p className="text-sm text-white/60">bank_statement_May2026.csv</p>
-                  <p className="text-xs text-green-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                    Ready to import (156 KB)
-                  </p>
-                </div>
-              </div>
-
-              {/* Bank Template Selector */}
-              <div className="mb-4">
-                <label className="form-label">{t('transactions.selectTemplate')}</label>
-                <select
-                  value={selectedTemplate}
-                  onChange={(e) => setSelectedTemplate(e.target.value)}
-                  className="form-input"
-                >
-                  {BANK_TEMPLATES.map((t) => (
-                    <option key={t} value={t} style={{ background: '#0f1d3d' }}>{t}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Column Mapping Preview */}
-              <div className="mb-5 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
-                {/* header */}
-                <div
-                  className="px-3 py-2 flex items-center gap-2"
-                  style={{ background: 'rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
-                >
-                  <Database size={13} className="text-blue-400" />
-                  <span className="text-xs font-bold text-white/80 uppercase tracking-wider">Column Mapping Preview</span>
-                </div>
-                {/* rows */}
-                <div className="divide-y" style={{ background: 'rgba(10,20,50,0.6)' }}>
-                  {[
-                    ['Date',      'Transaction Date', 'text-cyan-300',   'rgba(6,182,212,0.12)'],
-                    ['Amount',    'Debit Amount',     'text-amber-300',  'rgba(245,158,11,0.12)'],
-                    ['Sender',    'Account From',     'text-blue-300',   'rgba(59,130,246,0.12)'],
-                    ['Receiver',  'Account To',       'text-purple-300', 'rgba(168,85,247,0.12)'],
-                    ['Narration', 'Description',      'text-green-300',  'rgba(34,197,94,0.12)'],
-                  ].map(([field, col, colClass, colBg]) => (
-                    <div
-                      key={field}
-                      className="flex items-center justify-between px-3 py-2"
-                      style={{ borderColor: 'rgba(255,255,255,0.06)' }}
-                    >
-                      {/* field name pill */}
-                      <span
-                        className="text-xs font-semibold text-white/90 px-2 py-0.5 rounded-md"
-                        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
-                      >
-                        {field}
-                      </span>
-                      {/* arrow */}
-                      <span className="text-white/25 text-xs mx-2">→</span>
-                      {/* mapped column pill */}
-                      <span
-                        className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-md ${colClass}`}
-                        style={{ background: colBg, border: `1px solid ${colBg.replace('0.12', '0.28')}` }}
-                      >
-                        {col}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {importing && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2 text-sm text-blue-300">
-                    <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
-                    {t('transactions.processing')}
-                  </div>
-                  <div className="risk-bar-wrapper">
-                    <motion.div
-                      className="h-full rounded-full"
-                      initial={{ width: '0%' }}
-                      animate={{ width: '100%' }}
-                      transition={{ duration: 2.3, ease: 'easeInOut' }}
-                      style={{ background: 'linear-gradient(90deg, #2563eb, #60a5fa)' }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <button
-                onClick={handleImport}
-                disabled={importing}
-                className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
-                style={{ background: 'linear-gradient(135deg, #1E3A8A, #2563eb)', color: 'white' }}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showImportModal && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={() => !importing && setShowImportModal(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="glass-modal w-full max-w-md relative z-10 p-6 max-h-[90vh] overflow-y-auto shadow-2xl"
               >
-                {importing ? (
-                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('transactions.processing')}</>
-                ) : (
-                  <><Upload size={15} /> {t('transactions.import')}</>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-base font-bold">{t('transactions.importCSV')}</h3>
+                  {!importing && (
+                    <button onClick={() => setShowImportModal(false)} className="p-2 hover:bg-white/10 rounded-lg">
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Upload Area */}
+                <div className="drop-zone mb-4 cursor-default">
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload size={24} className="text-amber-400" />
+                    <p className="text-sm text-white/60">bank_statement_May2026.csv</p>
+                    <p className="text-xs text-green-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                      Ready to import (156 KB)
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bank Template Selector */}
+                <div className="mb-4">
+                  <label className="form-label">{t('transactions.selectTemplate')}</label>
+                  <select
+                    value={selectedTemplate}
+                    onChange={(e) => setSelectedTemplate(e.target.value)}
+                    className="form-input"
+                  >
+                    {BANK_TEMPLATES.map((t) => (
+                      <option key={t} value={t} style={{ background: '#0f1d3d' }}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Column Mapping Preview */}
+                <div className="mb-5 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
+                  {/* header */}
+                  <div
+                    className="px-3 py-2 flex items-center gap-2"
+                    style={{ background: 'rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+                  >
+                    <Database size={13} className="text-blue-400" />
+                    <span className="text-xs font-bold text-white/80 uppercase tracking-wider">Column Mapping Preview</span>
+                  </div>
+                  {/* rows */}
+                  <div className="divide-y" style={{ background: 'rgba(10,20,50,0.6)' }}>
+                    {[
+                      ['Date',      'Transaction Date', 'text-cyan-300',   'rgba(6,182,212,0.12)'],
+                      ['Amount',    'Debit Amount',     'text-amber-300',  'rgba(245,158,11,0.12)'],
+                      ['Sender',    'Account From',     'text-blue-300',   'rgba(59,130,246,0.12)'],
+                      ['Receiver',  'Account To',       'text-purple-300', 'rgba(168,85,247,0.12)'],
+                      ['Narration', 'Description',      'text-green-300',  'rgba(34,197,94,0.12)'],
+                    ].map(([field, col, colClass, colBg]) => (
+                      <div
+                        key={field}
+                        className="flex items-center justify-between px-3 py-2"
+                        style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+                      >
+                        {/* field name pill */}
+                        <span
+                          className="text-xs font-semibold text-white/90 px-2 py-0.5 rounded-md"
+                          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
+                        >
+                          {field}
+                        </span>
+                        {/* arrow */}
+                        <span className="text-white/25 text-xs mx-2">→</span>
+                        {/* mapped column pill */}
+                        <span
+                          className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-md ${colClass}`}
+                          style={{ background: colBg, border: `1px solid ${colBg.replace('0.12', '0.28')}` }}
+                        >
+                          {col}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {importing && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2 text-sm text-blue-300">
+                      <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                      {t('transactions.processing')}
+                    </div>
+                    <div className="risk-bar-wrapper">
+                      <motion.div
+                        className="h-full rounded-full"
+                        initial={{ width: '0%' }}
+                        animate={{ width: '100%' }}
+                        transition={{ duration: 2.3, ease: 'easeInOut' }}
+                        style={{ background: 'linear-gradient(90deg, #2563eb, #60a5fa)' }}
+                      />
+                    </div>
+                  </div>
                 )}
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
+                <button
+                  onClick={handleImport}
+                  disabled={importing}
+                  className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
+                  style={{ background: 'linear-gradient(135deg, #1E3A8A, #2563eb)', color: 'white' }}
+                >
+                  {importing ? (
+                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('transactions.processing')}</>
+                  ) : (
+                    <><Upload size={15} /> {t('transactions.import')}</>
+                  )}
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };
