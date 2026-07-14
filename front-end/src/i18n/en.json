@@ -2,6 +2,8 @@
   "nav": {
     "dashboard": "Dashboard",
     "cases": "Cases",
+    "analytics": "Threat Intel",
+    "portal": "Citizen Portal",
     "audit": "Audit Logs",
     "settings": "Settings",
     "logout": "Logout"
@@ -16,7 +18,10 @@
     "newCase": "New Case",
     "notifications": "Notifications",
     "markAllRead": "Mark all read",
-    "noNotifications": "No notifications"
+    "noNotifications": "No notifications",
+    "viewAll": "View All",
+    "asOf": "As of",
+    "createdSuccess": "created successfully!"
   },
   "case": {
     "caseNumber": "Case Number",
@@ -28,7 +33,9 @@
     "description": "Description",
     "open": "Open",
     "active": "Active",
-    "closed": "Closed"
+    "closed": "Closed",
+    "casesInDb": "cases in database",
+    "allCases": "All Cases"
   },
   "tabs": {
     "evidence": "Evidence",
@@ -51,7 +58,13 @@
     "hash": "Hash",
     "uploaded": "Uploaded",
     "download": "Download",
-    "noEvidence": "No evidence uploaded yet"
+    "noEvidence": "No evidence uploaded yet",
+    "dropToUpload": "Drop to upload!",
+    "uploadingMsg": "Uploading & processing evidence...",
+    "uploadedFiles": "Uploaded Files",
+    "ocrStatus": "OCR Status",
+    "ocrComplete": "Complete",
+    "ocrPending": "Pending"
   },
   "entities": {
     "value": "Value",
@@ -68,7 +81,10 @@
     "all": "All",
     "verified": "Verified",
     "rejected": "Rejected",
-    "pending": "Pending"
+    "pending": "Pending",
+    "entitiesCount": "entities",
+    "acceptedCount": "accepted",
+    "rejectedCount": "rejected"
   },
   "transactions": {
     "importCSV": "Import CSV",
@@ -84,7 +100,12 @@
     "no": "No",
     "selectTemplate": "Select Bank Template",
     "import": "Import",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "noTransactions": "No transactions imported yet.",
+    "importHint": "Click \"Import CSV\" to load bank statement data.",
+    "clickOrDrag": "Click or drag CSV file to upload",
+    "readyToImport": "Ready to import",
+    "mappingPreview": "Column Mapping Preview"
   },
   "moneyTrail": {
     "title": "Money Trail Visualization",
@@ -99,7 +120,13 @@
     "bank": "Bank",
     "fitView": "Fit View",
     "zoomIn": "Zoom In",
-    "zoomOut": "Zoom Out"
+    "zoomOut": "Zoom Out",
+    "muleAccount": "Mule Account",
+    "victim": "Victim",
+    "finalBeneficiary": "Final Beneficiary",
+    "unknownAccount": "Unknown Account",
+    "clickNode": "Click any node",
+    "clickNodeHint": "to see account details, risk score & flow data"
   },
   "fraudFindings": {
     "title": "Fraud Findings",
@@ -116,7 +143,10 @@
     "critical": "Critical",
     "high": "High",
     "medium": "Medium",
-    "low": "Low"
+    "low": "Low",
+    "totalAlerts": "Total Alerts",
+    "acceptedCount": "Accepted",
+    "falsePositives": "False Positives"
   },
   "report": {
     "title": "Investigation Report",
@@ -162,5 +192,91 @@
     "cancel": "Cancel",
     "create": "Create Case",
     "creating": "Creating..."
+  },
+  "analytics": {
+    "badge": "Predictive AI Engine & 1930 Interop",
+    "title": "AI Threat Intelligence & Crime Forecasting",
+    "subtitle": "Real-time predictive incident volume forecasting across Gujarat districts and live synchronization with national 1930 helpline mule account feeds.",
+    "forecastTitle": "30-Day Predictive Incident Volume Forecast",
+    "forecastSubtitle": "Historical reported incidents vs. AI trend projection (Recharts ARIMA Model)",
+    "typologyTitle": "Dominant Scam Typology Share",
+    "typologySubtitle": "Distribution of active cybercrime vectors in Gujarat",
+    "densityTitle": "Jurisdiction Crime Risk Density Heatmap",
+    "densitySubtitle": "High-priority policing zones across state district cells",
+    "registryTitle": "National 1930 / I4C Mule Account Registry",
+    "registrySubtitle": "Real-time flagged beneficiary accounts and freeze requisitions from MHA feed",
+    "searchPlaceholder": "Filter by Account No, VPA, IFSC, or Bank Name...",
+    "refresh": "Refresh Live Feed",
+    "refreshing": "Syncing Feed...",
+    "export": "Export CSV / PDF"
+  },
+  "portal": {
+    "badge": "Citizen & Helpdesk Interop",
+    "title": "NCRP Citizen Assistance Portal",
+    "subtitle": "Report cybercrime incidents instantly, track I4C ticket status in real time, and enable law enforcement officers to auto-convert citizen reports into active branch investigations.",
+    "tabIntake": "Register New Complaint / Intake",
+    "tabTrack": "Track Ticket Status",
+    "tabAdvisories": "Safety & Hygiene Advisories",
+    "formTitle": "Incident Registration Form",
+    "formSubtitle": "Fill in accurate details to help law enforcement officers initiate swift triage",
+    "nameLabel": "Complainant / Victim Name",
+    "phoneLabel": "Contact Phone / Mobile",
+    "categoryLabel": "Incident Category",
+    "amountLabel": "Total Amount Lost (₹)",
+    "descLabel": "Incident Description & Statement",
+    "notice": "All registered tickets are immediately synchronized with the National Cyber Crime Portal (NCRP) and accessible to assigned desk officers for verification under Section 154 CrPC / BNSS.",
+    "submitBtn": "Submit Complaint to Intake Queue",
+    "submitting": "Submitting...",
+    "successTitle": "Complaint Registered Successfully!",
+    "successText": "Your incident has been transmitted to the Cyber Crime Branch intake queue. Please save your tracking ticket number below:",
+    "registerAnother": "Register Another Incident",
+    "trackQueue": "Track Ticket Queue",
+    "searchPlaceholder": "Filter by Ticket ID (NCRP-...), Complainant Name or Phone...",
+    "refresh": "Refresh Queue",
+    "convertToCase": "Convert to Investigation Case",
+    "viewCase": "View Active Case",
+    "noComplaints": "No complaints found matching filter"
+  },
+  "settings": {
+    "badge": "System Administration",
+    "title": "System Configuration & Governance",
+    "subtitle": "Configure AI/OCR extraction sensitivity, manage national interoperability gateways, and enforce security policies.",
+    "saveBtn": "Save & Sync Configuration",
+    "saving": "Saving & Syncing...",
+    "successMsg": "System configuration successfully applied and propagated across all active policing worker nodes.",
+    "aiSectionTitle": "AI Engine & OCR Extraction",
+    "aiSectionSubtitle": "Tune model sensitivity for automated evidence triage",
+    "confidenceLabel": "Entity Extraction Confidence Threshold",
+    "confidenceDesc": "Entities below this threshold require manual officer review before insertion into graph network.",
+    "triageTitle": "Automated AI Triage & Risk Scoring",
+    "triageDesc": "Automatically calculate transaction risk scores and generate alerts",
+    "ocrLabel": "OCR Document Processing Sensitivity",
+    "securitySectionTitle": "Security Controls & Governance",
+    "securitySectionSubtitle": "Manage authentication, session expiry, and audit protocols",
+    "twoFactorTitle": "Enforce 2-Factor Authentication (2FA)",
+    "twoFactorDesc": "Require OTP verification via registered official phone for all sensitive exports",
+    "timeoutLabel": "Officer Inactive Session Timeout",
+    "langLabel": "Default System Interface Language",
+    "connectorsSectionTitle": "National & State Interoperability Gateways",
+    "connectorsSectionSubtitle": "Live status of secure API channels with central reporting portals & bank networks",
+    "pingBtn": "Ping Node",
+    "pinging": "Pinging..."
+  },
+  "rbac": {
+    "accessDenied": "Access Denied · Unauthorized Route",
+    "unauthorizedDesc": "Your active security clearance does not permit access to this specific law enforcement or administrative workspace.",
+    "returnHome": "Return to Authorized Workspace"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "login": {
+    "login": "Secure Sign In",
+    "logging": "Authenticating...",
+    "demoHint": "Quick Demo Presets:",
+    "citizenLogin": "Citizen / Public Helpdesk",
+    "officerLogin": "Investigation Officer",
+    "adminLogin": "System Administrator"
   }
 }
