@@ -324,3 +324,94 @@
 .badge-pulse {
   animation: badgePulse 2s ease-in-out infinite;
 }
+
+/* ─── ADDITIVE LIGHT THEME OVERRIDES (Does not affect current dark theme) ─── */
+.theme-light body {
+  background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%) !important;
+  color: #111827 !important;
+}
+
+.theme-light .glass-card {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+  color: #1f2937 !important;
+}
+
+.theme-light .glass-modal {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
+  color: #111827 !important;
+}
+
+.theme-light .stat-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(243,244,246,0.9) 100%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
+  color: #111827 !important;
+}
+
+.theme-light .nav-item {
+  color: rgba(31, 41, 55, 0.75) !important;
+}
+
+.theme-light .nav-item:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #111827 !important;
+}
+
+.theme-light .nav-item.active {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(59, 130, 246, 0.1) 100%) !important;
+  color: #1d4ed8 !important;
+  border: 1px solid rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Light Theme Text & Utility Color Mapping */
+.theme-light .text-white { color: #111827 !important; }
+.theme-light .text-white\/90 { color: rgba(17, 24, 39, 0.9) !important; }
+.theme-light .text-white\/80 { color: rgba(17, 24, 39, 0.8) !important; }
+.theme-light .text-white\/70 { color: rgba(17, 24, 39, 0.7) !important; }
+.theme-light .text-white\/60 { color: rgba(17, 24, 39, 0.6) !important; }
+.theme-light .text-white\/50 { color: rgba(17, 24, 39, 0.55) !important; }
+.theme-light .text-white\/40 { color: rgba(17, 24, 39, 0.45) !important; }
+.theme-light .text-white\/30 { color: rgba(17, 24, 39, 0.35) !important; }
+.theme-light .text-white\/20 { color: rgba(17, 24, 39, 0.25) !important; }
+
+.theme-light .border-white\/20 { border-color: rgba(17, 24, 39, 0.2) !important; }
+.theme-light .border-white\/15 { border-color: rgba(17, 24, 39, 0.15) !important; }
+.theme-light .border-white\/10 { border-color: rgba(17, 24, 39, 0.1) !important; }
+.theme-light .border-white\/08 { border-color: rgba(17, 24, 39, 0.08) !important; }
+.theme-light .border-white\/06 { border-color: rgba(17, 24, 39, 0.06) !important; }
+.theme-light .border-white\/05 { border-color: rgba(17, 24, 39, 0.05) !important; }
+
+.theme-light .bg-black\/40,
+.theme-light .bg-black\/50,
+.theme-light .bg-black\/60 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.theme-light input,
+.theme-light textarea,
+.theme-light select {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #111827 !important;
+  border-color: rgba(17, 24, 39, 0.2) !important;
+}
+
+.theme-light input::placeholder,
+.theme-light textarea::placeholder {
+  color: rgba(17, 24, 39, 0.4) !important;
+}
+
+/* Navbar and Sidebar light overrides */
+.theme-light nav.fixed {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.theme-light aside.fixed {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+

@@ -3,10 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Shield, Bell, ChevronDown, Globe, LogOut, User,
-  CheckCheck, AlertTriangle, Info, CheckCircle, Menu, X
+  CheckCheck, AlertTriangle, Info, CheckCircle, Menu, X, Sun, Moon
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useNotificationStore } from '../../store/notificationStore';
+import { useThemeStore } from '../../store/themeStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -18,6 +19,7 @@ const LANGUAGES = [
 
 export const Navbar: React.FC<{ onMenuToggle: () => void; sidebarOpen: boolean }> = ({ onMenuToggle, sidebarOpen }) => {
   const { user, logout } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -80,6 +82,25 @@ export const Navbar: React.FC<{ onMenuToggle: () => void; sidebarOpen: boolean }
           <div className="text-xs text-white/40 leading-none">Smart Policing</div>
         </div>
       </div>
+
+      {/* Theme Switcher */}
+      <button
+        onClick={toggleTheme}
+        title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+        className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-1.5 border border-white/10"
+      >
+        {theme === 'dark' ? (
+          <>
+            <Sun size={17} className="text-amber-400 animate-spin-slow" />
+            <span className="text-xs font-semibold hidden sm:inline">Light</span>
+          </>
+        ) : (
+          <>
+            <Moon size={17} className="text-blue-500" />
+            <span className="text-xs font-semibold hidden sm:inline">Dark</span>
+          </>
+        )}
+      </button>
 
       {/* Language Switcher */}
       <div className="relative" ref={langRef}>
