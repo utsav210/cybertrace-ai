@@ -5,6 +5,7 @@ import { Shield, Eye, EyeOff, Lock, User, AlertCircle, ChevronRight, Users, Sun,
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { motion } from 'framer-motion';
+import clsx from 'clsx';
 
 export const LoginPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -34,8 +35,12 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #0A1128 0%, #1C305C 50%, #0A1128 100%)' }}>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300"
+      style={{
+        background: theme === 'light'
+          ? 'linear-gradient(135deg, #EEF2F6 0%, #E2E8F0 50%, #CBD5E1 100%)'
+          : 'linear-gradient(135deg, #0A1128 0%, #1C305C 50%, #0A1128 100%)'
+      }}>
       
       {/* Top Right Controls: Theme Toggle & Multilingual Switcher */}
       <div className="absolute top-6 right-6 z-20 flex items-center gap-2 bg-black/40 border border-white/10 p-1.5 rounded-full backdrop-blur-md shadow-lg">
@@ -114,11 +119,11 @@ export const LoginPage: React.FC = () => {
           >
             <Shield size={40} className="text-amber-400" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">CyberTrace AI</h1>
-          <p className="text-white/50 text-sm mt-1">{t('login.subtitle')}</p>
+          <h1 className={clsx("text-3xl font-bold tracking-tight transition-colors", theme === 'light' ? "text-slate-900" : "text-white")}>CyberTrace AI</h1>
+          <p className={clsx("text-sm mt-1 font-medium transition-colors", theme === 'light' ? "text-slate-600" : "text-white/50")}>{t('login.subtitle')}</p>
           <div className="flex items-center justify-center gap-2 mt-3">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs text-white/40">Secure Portal · Gujarat Cyber Crime Branch</span>
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className={clsx("text-xs font-semibold transition-colors", theme === 'light' ? "text-slate-500" : "text-white/40")}>Secure Portal · Gujarat Cyber Crime Branch</span>
           </div>
         </div>
 
@@ -253,7 +258,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-white/20 mt-6">
+        <p className={clsx("text-center text-xs mt-6 transition-colors", theme === 'light' ? "text-slate-600 font-semibold" : "text-white/20")}>
           © 2026 Gujarat Cyber Crime Branch · CyberTrace AI v2.0
         </p>
       </motion.div>

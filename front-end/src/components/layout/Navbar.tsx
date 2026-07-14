@@ -64,8 +64,12 @@ export const Navbar: React.FC<{ onMenuToggle: () => void; sidebarOpen: boolean }
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-4 gap-4"
-      style={{ background: 'rgba(10,17,40,0.95)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-4 gap-4 transition-colors duration-300"
+      style={{
+        background: theme === 'light' ? 'rgba(255,255,255,0.92)' : 'rgba(10,17,40,0.95)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: theme === 'light' ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.08)'
+      }}>
       
       {/* Menu toggle */}
       <button onClick={onMenuToggle} className="p-2 rounded-lg hover:bg-white/10 transition-colors lg:hidden">

@@ -277,6 +277,10 @@
     "demoHint": "Quick Demo Presets:",
     "citizenLogin": "Citizen / Public Helpdesk",
     "officerLogin": "Investigation Officer",
-    "adminLogin": "System Administrator"
+    "adminLogin": "System Administrator",
+    "subtitle": "Gujarat Cyber Crime Branch · Secure Triage & Intelligence Portal",
+    "username": "Username or Officer ID",
+    "password": "Password",
+    "error": "Authentication failed. Please verify your officer credentials or demo preset."
   }
 }

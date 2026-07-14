@@ -6,6 +6,7 @@ import {
   ShieldAlert, Users
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -17,6 +18,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const { t } = useTranslation();
   const { user, logout } = useAuthStore();
+  const { theme } = useThemeStore();
   const navigate = useNavigate();
 
   const navItems = user?.role === 'citizen'
@@ -56,9 +58,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
           open ? 'translate-x-0 w-60' : '-translate-x-full lg:translate-x-0 lg:w-16'
         )}
         style={{
-          background: 'rgba(10,17,40,0.95)',
+          background: theme === 'light' ? 'rgba(255,255,255,0.95)' : 'rgba(10,17,40,0.95)',
           backdropFilter: 'blur(20px)',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          borderRight: theme === 'light' ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.06)',
         }}
       >
         {/* Nav items */}
