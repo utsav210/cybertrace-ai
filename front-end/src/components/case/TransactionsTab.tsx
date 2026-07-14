@@ -176,7 +176,7 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-modal w-full max-w-md relative z-10 p-6"
+              className="glass-modal w-full max-w-md relative z-10 p-6 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-base font-bold">{t('transactions.importCSV')}</h3>
