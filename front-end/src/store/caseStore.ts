@@ -38,7 +38,7 @@ interface CaseState {
   editEntity: (id: string, value: string) => Promise<void>;
   
   // Transaction actions
-  importTransactions: (caseId: string) => Promise<void>;
+  importTransactions: (caseId: string, file?: File) => Promise<void>;
   
   // Fraud alert actions
   acceptFraudAlert: (id: string) => Promise<void>;
@@ -270,9 +270,16 @@ export const useCaseStore = create<CaseState>((set, get) => ({
     }
   },
 
-  importTransactions: async (caseId) => {
+  importTransactions: async (caseId, file) => {
     try {
-      const res = await fetch(`/api/cases/${caseId}/transactions/import`, { method: 'POST' });
+      const options: RequestInit = { method: 'POST' };
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        options.body = formData;
+      }
+
+      const res = await fetch(`/api/cases/${caseId}/transactions/import`, options);
       if (res.ok) {
         // Run analytics to generate alerts/nodes/links
         const graphRes = await fetch(`/api/cases/${caseId}/analytics`);

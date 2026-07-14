@@ -19,6 +19,7 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('SBI (State Bank of India)');
   const [importing, setImporting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const caseTxs = transactions.filter((tx) => tx.caseId === caseId);
   const totalAmount = caseTxs.reduce((sum, tx) => sum + tx.amount, 0);
@@ -26,9 +27,10 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
 
   const handleImport = async () => {
     setImporting(true);
-    await importTransactions(caseId);
+    await importTransactions(caseId, selectedFile || undefined);
     setImporting(false);
     setShowImportModal(false);
+    setSelectedFile(null);
   };
 
   return (
@@ -190,14 +192,24 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
                 </div>
 
                 {/* Upload Area */}
-                <div className="drop-zone mb-4 cursor-default">
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload size={24} className="text-amber-400" />
-                    <p className="text-sm text-white/60">bank_statement_May2026.csv</p>
-                    <p className="text-xs text-green-400 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                      Ready to import (156 KB)
+                <div className="mb-4 relative">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  />
+                  <div className="drop-zone flex flex-col items-center gap-2 cursor-pointer transition-colors hover:bg-white/[0.02]">
+                    <Upload size={24} className={selectedFile ? "text-green-400" : "text-amber-400"} />
+                    <p className="text-sm text-white/60">
+                      {selectedFile ? selectedFile.name : "Click or drag CSV file to upload"}
                     </p>
+                    {selectedFile && (
+                      <p className="text-xs text-green-400 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                        Ready to import ({(selectedFile.size / 1024).toFixed(1)} KB)
+                      </p>
+                    )}
                   </div>
                 </div>
 

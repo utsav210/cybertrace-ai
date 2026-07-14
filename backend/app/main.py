@@ -510,24 +510,53 @@ def import_transactions(case_id):
         conn.close()
         return jsonify({"error": "Case not found"}), 404
         
-    # Check if transactions already loaded
-    cursor.execute("SELECT COUNT(*) FROM transactions WHERE case_id = ?;", (case_id,))
-    count = cursor.fetchone()[0]
-    if count > 0:
-        conn.close()
-        return jsonify({"message": "Transactions already imported for this case."})
+    transactions_data = []
+    
+    import csv, io, time
+    
+    # Parse file if provided
+    if 'file' in request.files and request.files['file'].filename != '':
+        file = request.files['file']
+        if file.filename.endswith('.csv'):
+            stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
+            csv_input = csv.DictReader(stream)
+            for row in csv_input:
+                date = row.get("date", row.get("Transaction Date", ""))
+                sender = row.get("sender", row.get("Account From", ""))
+                receiver = row.get("receiver", row.get("Account To", ""))
+                
+                amount_raw = row.get("amount", row.get("Debit Amount", "0"))
+                try:
+                    amount = float(amount_raw.replace(',', ''))
+                except ValueError:
+                    amount = 0.0
+                    
+                narration = row.get("narration", row.get("Description", ""))
+                suspicious = 1 if row.get("suspicious", "").lower() == "true" else 0
+                tx_id = f"tx-{case_id}-{int(time.time() * 1000)}-{len(transactions_data)}"
+                
+                transactions_data.append((tx_id, case_id, date, sender, receiver, amount, narration, suspicious))
+                
+    if not transactions_data:
+        # Check if transactions already loaded for mock
+        cursor.execute("SELECT COUNT(*) FROM transactions WHERE case_id = ?;", (case_id,))
+        count = cursor.fetchone()[0]
+        if count > 0:
+            conn.close()
+            return jsonify({"message": "Transactions already imported for this case."})
 
-    # Seed typical transactions list for mock/import simulation
-    transactions_data = [
-        (f"tx-{case_id}-1", case_id, "01/05/2026", "victim@upi", "mule1@icici", 50000.0, "KYC Verification Fee", 1),
-        (f"tx-{case_id}-2", case_id, "01/05/2026", "mule1@icici", "mule2@sbi", 50000.0, "Fund Transfer", 1),
-        (f"tx-{case_id}-3", case_id, "01/05/2026", "mule2@sbi", "beneficiary@hdfc", 50000.0, "Payment", 1),
-        (f"tx-{case_id}-4", case_id, "01/05/2026", "beneficiary@hdfc", "victim@upi", 50000.0, "Refund", 1),
-        (f"tx-{case_id}-5", case_id, "02/05/2026", "victim@upi", "mule1@icici", 20000.0, "Account Update Charges", 1),
-        (f"tx-{case_id}-6", case_id, "02/05/2026", "mule1@icici", "mule3@axis", 20000.0, "Transfer", 1),
-        (f"tx-{case_id}-7", case_id, "02/05/2026", "mule3@axis", "beneficiary@hdfc", 20000.0, "Settlement", 1),
-        (f"tx-{case_id}-8", case_id, "03/05/2026", "victim@upi", "mule1@icici", 10000.0, "Final KYC Update", 1)
-    ]
+        # Seed typical transactions list for mock/import simulation if no file
+        transactions_data = [
+            (f"tx-{case_id}-1", case_id, "01/05/2026", "victim@upi", "mule1@icici", 50000.0, "KYC Verification Fee", 1),
+            (f"tx-{case_id}-2", case_id, "01/05/2026", "mule1@icici", "mule2@sbi", 50000.0, "Fund Transfer", 1),
+            (f"tx-{case_id}-3", case_id, "01/05/2026", "mule2@sbi", "beneficiary@hdfc", 50000.0, "Payment", 1),
+            (f"tx-{case_id}-4", case_id, "01/05/2026", "beneficiary@hdfc", "victim@upi", 50000.0, "Refund", 1),
+            (f"tx-{case_id}-5", case_id, "02/05/2026", "victim@upi", "mule1@icici", 20000.0, "Account Update Charges", 1),
+            (f"tx-{case_id}-6", case_id, "02/05/2026", "mule1@icici", "mule3@axis", 20000.0, "Transfer", 1),
+            (f"tx-{case_id}-7", case_id, "02/05/2026", "mule3@axis", "beneficiary@hdfc", 20000.0, "Settlement", 1),
+            (f"tx-{case_id}-8", case_id, "03/05/2026", "victim@upi", "mule1@icici", 10000.0, "Final KYC Update", 1)
+        ]
+        
     cursor.executemany("INSERT INTO transactions VALUES (?, ?, ?, ?, ?, ?, ?, ?);", transactions_data)
     conn.commit()
     conn.close()
@@ -543,25 +572,23 @@ def import_transactions(case_id):
 def get_analytics(case_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    # Fetch transactions
+
+    # Fetch all needed data in one connection
     cursor.execute("SELECT * FROM transactions WHERE case_id = ?;", (case_id,))
     tx_rows = cursor.fetchall()
-    
-    # Fetch case to identify victim nodes (complainant's upi, etc.)
+
     cursor.execute("SELECT complainant, complainant_phone FROM cases WHERE id = ?;", (case_id,))
     case_row = cursor.fetchone()
-    
-    # Find active UPI or account values extracted for this case to set as victim nodes
+
     cursor.execute("SELECT value FROM entities WHERE case_id = ? AND type = 'upi';", (case_id,))
     entity_rows = cursor.fetchall()
-    
-    conn.close()
-    
+
     if not tx_rows:
+        conn.close()
         return jsonify({"nodes": [], "links": [], "alerts": []})
-        
+
     transactions = []
+    all_senders = set()
     for r in tx_rows:
         t = row_to_dict(r)
         transactions.append({
@@ -570,42 +597,69 @@ def get_analytics(case_id):
             "amount": t["amount"],
             "date": t["date"]
         })
-        
-    # Set of victim nodes (UPI IDs linked to victim)
-    victim_nodes = {"victim@upi"} # Default mock victim
-    if case_row:
-        victim_nodes.add(case_row["complainant"].lower() + "@upi")
+        all_senders.add(t["sender"])
+
+    # Build victim node set from entities table first
+    victim_nodes = set()
     for er in entity_rows:
         victim_nodes.add(er["value"].lower())
-        
-    # Execute graph analytical algorithms
+
+    # Add UPI derived from complainant name
+    if case_row and case_row["complainant"]:
+        victim_nodes.add(case_row["complainant"].lower() + "@upi")
+
+    # Fallback: nodes that only send, never receive
+    if not victim_nodes:
+        all_receivers = {t["receiver"] for t in transactions}
+        pure_senders = all_senders - all_receivers
+        victim_nodes = pure_senders if pure_senders else all_senders
+
+    # Run graph analysis (pure Python, no DB)
     generated_alerts, nodes, links = analyze_transaction_graph(transactions, victim_nodes)
-    
-    # Insert alerts into database to persist them
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    for alert in generated_alerts:
-        # Check if alert already exists
-        cursor.execute("SELECT id FROM fraud_alerts WHERE case_id = ? AND type = ? AND description = ?;", (case_id, alert["type"], alert["description"]))
-        if not cursor.fetchone():
+
+    # Persist new alerts using the already-open connection
+    # Collect notification params to create AFTER closing conn (avoids nested connection deadlock)
+    pending_notifications = []
+    try:
+        for alert in generated_alerts:
             cursor.execute(
-                "INSERT INTO fraud_alerts (id, case_id, type, severity, description, involved_entities, risk_score, ai_confidence, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                (alert["id"], case_id, alert["type"], alert["severity"], alert["description"], json.dumps(alert["involved_entities"]), alert["risk_score"], alert["ai_confidence"], alert["status"])
+                "SELECT id FROM fraud_alerts WHERE case_id = ? AND type = ? AND description = ?;",
+                (case_id, alert["type"], alert["description"])
             )
-            create_notification(
-                "Fraud Alert Raised",
-                f"{alert['type']} ({alert['severity'].upper()}) pattern detected in funds flow.",
-                "warning" if alert['severity'] in ['critical', 'high'] else "info",
-                case_id
-            )
-    conn.commit()
-    conn.close()
-    
+            if not cursor.fetchone():
+                cursor.execute(
+                    "INSERT INTO fraud_alerts (id, case_id, type, severity, description, "
+                    "involved_entities, risk_score, ai_confidence, status) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                    (alert["id"], case_id, alert["type"], alert["severity"],
+                     alert["description"], json.dumps(alert["involved_entities"]),
+                     alert["risk_score"], alert["ai_confidence"], alert["status"])
+                )
+                pending_notifications.append({
+                    "title": "Fraud Alert Raised",
+                    "message": f"{alert['type']} ({alert['severity'].upper()}) pattern detected in funds flow.",
+                    "type": "warning" if alert["severity"] in ["critical", "high"] else "info",
+                    "case_id": case_id
+                })
+        conn.commit()
+    except Exception as db_err:
+        print(f"[analytics] Alert persistence warning: {db_err}")
+    finally:
+        conn.close()
+
+    # Create notifications now that DB connection is closed
+    for n in pending_notifications:
+        try:
+            create_notification(n["title"], n["message"], n["type"], n["case_id"])
+        except Exception:
+            pass
+
     return jsonify({
         "nodes": nodes,
         "links": links,
         "alerts": generated_alerts
     })
+
 
 # Fraud Alerts
 @app.route('/api/cases/<case_id>/alerts', methods=['GET'])
@@ -741,4 +795,7 @@ def mark_all_notifications_read():
 
 if __name__ == "__main__":
     initialize_database()
-    app.run(host="127.0.0.1", port=8000, debug=True)
+    # use_reloader=False: prevents Flask from restarting every time a .py file changes,
+    # which caused 'database is locked' and connection timeout errors during testing.
+    # threaded=True: handles concurrent API calls (analytics + evidence upload) without blocking.
+    app.run(host="127.0.0.1", port=8000, debug=True, use_reloader=False, threaded=True)
