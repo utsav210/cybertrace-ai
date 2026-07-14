@@ -138,7 +138,7 @@ def extract_entities_from_text(text: str) -> List[Dict[str, Any]]:
 
     return entities
 
-def analyze_transaction_graph(transactions: List[Dict[str, Any]], victim_nodes: Set[str]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]:
+def analyze_transaction_graph(transactions: List[Dict[str, Any]], victim_nodes: Set[str]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
     Performs graph analysis on transaction logs to automatically identify:
     1. Mule Accounts (high fan-in/fan-out)
