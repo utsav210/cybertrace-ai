@@ -180,9 +180,11 @@ export const MoneyTrailTab: React.FC = () => {
 
   // ── Fit view ─────────────────────────────────────────────────────────────────
   const fitView = useCallback(() => {
-    setPositions(computeLayout(dims.w, dims.h));
+    if (graphNodes.length > 0) {
+      setPositions(computeLayout(graphNodes, aggLinks, dims.w, dims.h));
+    }
     setSelectedNode(null);
-  }, [dims]);
+  }, [dims, graphNodes, aggLinks]);
 
   // ── SVG pointer events for node dragging ─────────────────────────────────────
   const svgRef = useRef<SVGSVGElement>(null);
