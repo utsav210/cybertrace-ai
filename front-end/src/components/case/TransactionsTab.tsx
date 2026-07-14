@@ -81,13 +81,13 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>#</th>
+                  <th style={{ width: 36 }}>#</th>
                   <th>{t('transactions.date')}</th>
                   <th>{t('transactions.sender')}</th>
                   <th>{t('transactions.receiver')}</th>
-                  <th>{t('transactions.amount')}</th>
+                  <th style={{ textAlign: 'right' }}>{t('transactions.amount')}</th>
                   <th>{t('transactions.narration')}</th>
-                  <th>{t('transactions.suspicious')}</th>
+                  <th style={{ textAlign: 'center' }}>{t('transactions.suspicious')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -96,31 +96,52 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
                     key={tx.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className={clsx(tx.suspicious && 'bg-red-500/5')}
+                    transition={{ delay: i * 0.04 }}
+                    className={clsx(
+                      tx.suspicious ? 'bg-red-500/8' : 'hover:bg-white/[0.03]',
+                      'transition-colors'
+                    )}
                   >
-                    <td className="text-white/30 text-xs">{i + 1}</td>
-                    <td className="font-mono text-xs text-white/60">{tx.date}</td>
+                    <td className="text-white/25 text-xs font-mono">{i + 1}</td>
                     <td>
-                      <span className="font-mono text-xs px-2 py-0.5 rounded-md text-blue-300"
-                        style={{ background: 'rgba(59,130,246,0.1)' }}>
+                      <span className="font-mono text-xs text-white/55 whitespace-nowrap">{tx.date}</span>
+                    </td>
+                    <td>
+                      <span
+                        className="inline-block font-mono text-xs px-2 py-0.5 rounded-md text-blue-300 max-w-[160px] truncate"
+                        style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)' }}
+                        title={tx.sender}
+                      >
                         {tx.sender}
                       </span>
                     </td>
                     <td>
-                      <span className="font-mono text-xs px-2 py-0.5 rounded-md"
-                        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)' }}>
+                      <span
+                        className="inline-block font-mono text-xs px-2 py-0.5 rounded-md text-purple-300 max-w-[160px] truncate"
+                        style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.18)' }}
+                        title={tx.receiver}
+                      >
                         {tx.receiver}
                       </span>
                     </td>
-                    <td>
-                      <span className="font-bold text-sm text-white">{formatINR(tx.amount)}</span>
+                    <td style={{ textAlign: 'right' }}>
+                      <span className={clsx(
+                        'font-bold text-sm tabular-nums',
+                        tx.suspicious ? 'text-red-400' : 'text-white'
+                      )}>
+                        {formatINR(tx.amount)}
+                      </span>
                     </td>
-                    <td className="text-white/50 text-xs max-w-[140px] truncate">{tx.narration}</td>
-                    <td>
+                    <td className="text-white/55 text-xs" style={{ maxWidth: 180 }}>
+                      <span className="block truncate" title={tx.narration}>{tx.narration}</span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
                       {tx.suspicious ? (
-                        <span className="flex items-center gap-1 text-xs font-semibold text-red-400">
-                          <AlertTriangle size={11} /> {t('transactions.yes')}
+                        <span
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-red-400 px-2 py-0.5 rounded-full"
+                          style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}
+                        >
+                          <AlertTriangle size={10} />{t('transactions.yes')}
                         </span>
                       ) : (
                         <span className="text-xs text-white/30">{t('transactions.no')}</span>
@@ -193,14 +214,48 @@ export const TransactionsTab: React.FC<Props> = ({ caseId }) => {
               </div>
 
               {/* Column Mapping Preview */}
-              <div className="mb-5 p-3 rounded-lg text-xs" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div className="text-white/40 mb-2 font-semibold">Column Mapping Preview:</div>
-                {[['Date', 'Transaction Date'], ['Amount', 'Debit Amount'], ['Sender', 'Account From'], ['Receiver', 'Account To'], ['Narration', 'Description']].map(([field, col]) => (
-                  <div key={field} className="flex justify-between py-0.5">
-                    <span className="text-white/50">{field}</span>
-                    <span className="text-amber-400 font-mono">{col}</span>
-                  </div>
-                ))}
+              <div className="mb-5 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
+                {/* header */}
+                <div
+                  className="px-3 py-2 flex items-center gap-2"
+                  style={{ background: 'rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+                >
+                  <Database size={13} className="text-blue-400" />
+                  <span className="text-xs font-bold text-white/80 uppercase tracking-wider">Column Mapping Preview</span>
+                </div>
+                {/* rows */}
+                <div className="divide-y" style={{ background: 'rgba(10,20,50,0.6)' }}>
+                  {[
+                    ['Date',      'Transaction Date', 'text-cyan-300',   'rgba(6,182,212,0.12)'],
+                    ['Amount',    'Debit Amount',     'text-amber-300',  'rgba(245,158,11,0.12)'],
+                    ['Sender',    'Account From',     'text-blue-300',   'rgba(59,130,246,0.12)'],
+                    ['Receiver',  'Account To',       'text-purple-300', 'rgba(168,85,247,0.12)'],
+                    ['Narration', 'Description',      'text-green-300',  'rgba(34,197,94,0.12)'],
+                  ].map(([field, col, colClass, colBg]) => (
+                    <div
+                      key={field}
+                      className="flex items-center justify-between px-3 py-2"
+                      style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+                    >
+                      {/* field name pill */}
+                      <span
+                        className="text-xs font-semibold text-white/90 px-2 py-0.5 rounded-md"
+                        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      >
+                        {field}
+                      </span>
+                      {/* arrow */}
+                      <span className="text-white/25 text-xs mx-2">→</span>
+                      {/* mapped column pill */}
+                      <span
+                        className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-md ${colClass}`}
+                        style={{ background: colBg, border: `1px solid ${colBg.replace('0.12', '0.28')}` }}
+                      >
+                        {col}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {importing && (
