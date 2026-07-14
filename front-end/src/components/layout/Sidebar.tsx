@@ -2,7 +2,8 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  LayoutDashboard, FolderOpen, ScrollText, Settings, LogOut, Shield, ChevronRight
+  LayoutDashboard, FolderOpen, ScrollText, Settings, LogOut, Shield, ChevronRight,
+  ShieldAlert, Users
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,12 +19,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const navItems = [
-    { icon: LayoutDashboard, label: t('nav.dashboard'), to: '/dashboard' },
-    { icon: FolderOpen, label: t('nav.cases'), to: '/cases' },
-    ...(user?.role === 'admin' ? [{ icon: ScrollText, label: t('nav.audit'), to: '/admin/audit' }] : []),
-    { icon: Settings, label: t('nav.settings'), to: '/settings' },
-  ];
+  const navItems = user?.role === 'citizen'
+    ? [
+        { icon: Users, label: t('nav.portal', 'Citizen Portal'), to: '/portal' },
+        { icon: Settings, label: t('nav.settings'), to: '/settings' },
+      ]
+    : [
+        { icon: LayoutDashboard, label: t('nav.dashboard'), to: '/dashboard' },
+        { icon: FolderOpen, label: t('nav.cases'), to: '/cases' },
+        { icon: ShieldAlert, label: t('nav.analytics', 'Threat Intel'), to: '/analytics' },
+        { icon: Users, label: t('nav.portal', 'Citizen Portal'), to: '/portal' },
+        ...(user?.role === 'admin' ? [{ icon: ScrollText, label: t('nav.audit'), to: '/admin/audit' }] : []),
+        { icon: Settings, label: t('nav.settings'), to: '/settings' },
+      ];
 
   return (
     <>
@@ -78,7 +86,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
           {open && (
             <div className="mb-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
               <div className="text-xs font-semibold text-white/80">{user?.name}</div>
-              <div className="text-xs text-amber-400 capitalize">{user?.role}</div>
+              <div className="text-xs text-amber-400 capitalize font-medium">
+                {user?.role === 'citizen' ? 'Citizen / Helpdesk' : user?.role === 'admin' ? 'Administrator' : 'Investigation Officer'}
+              </div>
               <div className="text-xs text-white/30 mt-0.5">{user?.badgeNumber}</div>
             </div>
           )}

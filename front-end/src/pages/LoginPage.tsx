@@ -212,20 +212,30 @@ export const LoginPage: React.FC = () => {
             <p className="text-xs text-white/30 text-center">
               💡 {t('login.demoHint')}
             </p>
-            <div className="flex gap-2 mt-2">
+            <div className="grid grid-cols-3 gap-2 mt-3">
               <button
-                onClick={() => { setUsername('officer.raj'); setPassword('password123'); }}
-                className="flex-1 text-xs py-1.5 rounded-lg text-amber-400/70 hover:text-amber-400 transition-colors text-center"
-                style={{ background: 'rgba(245,158,11,0.08)' }}
+                type="button"
+                onClick={() => { setUsername('citizen.desai'); setPassword('citizen123'); }}
+                className="text-xs py-2 px-1 rounded-lg text-emerald-400/80 hover:text-emerald-300 font-medium transition-colors text-center border border-emerald-500/20"
+                style={{ background: 'rgba(16,185,129,0.08)' }}
               >
-                Officer Login
+                👤 Citizen Login
               </button>
               <button
+                type="button"
+                onClick={() => { setUsername('officer.raj'); setPassword('password123'); }}
+                className="text-xs py-2 px-1 rounded-lg text-amber-400/80 hover:text-amber-300 font-medium transition-colors text-center border border-amber-500/20"
+                style={{ background: 'rgba(245,158,11,0.08)' }}
+              >
+                🛡️ Officer Login
+              </button>
+              <button
+                type="button"
                 onClick={() => { setUsername('admin.sharma'); setPassword('admin123'); }}
-                className="flex-1 text-xs py-1.5 rounded-lg text-blue-400/70 hover:text-blue-400 transition-colors text-center"
+                className="text-xs py-2 px-1 rounded-lg text-blue-400/80 hover:text-blue-300 font-medium transition-colors text-center border border-blue-500/20"
                 style={{ background: 'rgba(59,130,246,0.08)' }}
               >
-                Admin Login
+                ⚙️ Admin Login
               </button>
             </div>
 
