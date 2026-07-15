@@ -6,7 +6,7 @@ import threading
 from flask import Flask, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 from .database import get_db_connection, hash_password, initialize_database
-from .analysis import compute_sha256, extract_pdf_text, extract_entities_from_text, analyze_transaction_graph
+from .analysis import compute_sha256, extract_pdf_text, extract_entities_from_text, analyze_transaction_graph, sanitize_string
 
 app = Flask(__name__)
 
