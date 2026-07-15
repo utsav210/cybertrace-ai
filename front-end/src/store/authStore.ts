@@ -4,6 +4,7 @@ import { USERS } from '../data/mockData';
 
 interface AuthState {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   loginError: string | null;
   isLoggingIn: boolean;
@@ -13,6 +14,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
+  token: localStorage.getItem('cybertrace_token'),
   isAuthenticated: false,
   loginError: null,
   isLoggingIn: false,
@@ -29,7 +31,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const data = await res.json();
         localStorage.setItem('cybertrace_token', data.token);
         localStorage.setItem('cybertrace_user', JSON.stringify(data.user));
-        set({ user: data.user, isAuthenticated: true, isLoggingIn: false });
+        set({ user: data.user, token: data.token, isAuthenticated: true, isLoggingIn: false });
         return true;
       } else {
         const err = await res.json();
@@ -40,9 +42,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Offline fallback
       const entry = USERS[username];
       if (entry && entry.password === password) {
-        localStorage.setItem('cybertrace_token', `jwt.${username}.${Date.now()}`);
+        const fallbackToken = `jwt.${username}.${Date.now()}`;
+        localStorage.setItem('cybertrace_token', fallbackToken);
         localStorage.setItem('cybertrace_user', JSON.stringify(entry.user));
-        set({ user: entry.user, isAuthenticated: true, isLoggingIn: false });
+        set({ user: entry.user, token: fallbackToken, isAuthenticated: true, isLoggingIn: false });
         return true;
       } else {
         set({ loginError: 'Invalid credentials', isLoggingIn: false });
@@ -63,16 +66,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     localStorage.removeItem('cybertrace_token');
     localStorage.removeItem('cybertrace_user');
-    set({ user: null, isAuthenticated: false, loginError: null });
+    set({ user: null, token: null, isAuthenticated: false, loginError: null });
   },
 }));
 
 // Rehydrate from localStorage on load
 const savedUser = localStorage.getItem('cybertrace_user');
-if (savedUser) {
+const savedToken = localStorage.getItem('cybertrace_token');
+if (savedUser && savedToken) {
   try {
     const user = JSON.parse(savedUser) as User;
-    useAuthStore.setState({ user, isAuthenticated: true });
+    useAuthStore.setState({ user, token: savedToken, isAuthenticated: true });
   } catch {
     // ignore
   }

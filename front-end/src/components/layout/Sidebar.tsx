@@ -67,20 +67,45 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
         {/* Nav items */}
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
           {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={() => window.innerWidth < 1024 && onClose()}
-              className={({ isActive }) =>
-                clsx('nav-item', isActive && 'active')
-              }
-            >
-              <item.icon size={18} className="flex-shrink-0" />
-              <span className={clsx('transition-all duration-300', open ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden lg:hidden')}>
-                {item.label}
-              </span>
-              {open && <ChevronRight size={14} className="ml-auto opacity-30" />}
-            </NavLink>
+            <div key={item.to}>
+              <NavLink
+                to={item.to}
+                onClick={() => window.innerWidth < 1024 && onClose()}
+                className={({ isActive }) =>
+                  clsx('nav-item', isActive && 'active')
+                }
+              >
+                <item.icon size={18} className="flex-shrink-0" />
+                <span className={clsx('transition-all duration-300', open ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden lg:hidden')}>
+                  {item.label}
+                </span>
+                {open && <ChevronRight size={14} className="ml-auto opacity-30" />}
+              </NavLink>
+
+              {/* Expandable OSINT sub-menu when sidebar is open */}
+              {open && item.to === '/osint' && (
+                <div className="ml-7 mt-1 space-y-1 border-l border-white/10 pl-2">
+                  {[
+                    { label: 'Username OSINT', tab: 'username' },
+                    { label: 'Domain / DNS', tab: 'domain' },
+                    { label: 'IP / Network', tab: 'ip' },
+                    { label: 'Email OSINT', tab: 'email' },
+                    { label: 'Phone OSINT', tab: 'phone' },
+                    { label: 'UPI ID OSINT', tab: 'upi' },
+                    { label: 'Image Forensics', tab: 'image' },
+                    { label: 'Audit History', tab: 'history' },
+                  ].map((sub) => (
+                    <NavLink
+                      key={sub.tab}
+                      to={`/osint`}
+                      className="block py-1 px-2.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/05 transition-all"
+                    >
+                      • {sub.label}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </nav>
 

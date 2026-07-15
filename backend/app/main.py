@@ -10,8 +10,10 @@ from werkzeug.utils import secure_filename
 from .database import get_db_connection, hash_password, initialize_database
 from .analysis import compute_sha256, extract_pdf_text, extract_entities_from_text, analyze_transaction_graph, sanitize_string
 from .osint_engine import run_phone_osint, run_email_osint, run_upi_osint, run_ip_osint, run_username_osint, run_image_forensics
+from .osint_blueprint import osint_bp
 
 app = Flask(__name__)
+app.register_blueprint(osint_bp)
 
 # Ensure upload directory exists
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")
@@ -1086,70 +1088,7 @@ def save_settings():
     create_audit_log("admin", "SETTINGS_UPDATED", "System Config", request.remote_addr or "127.0.0.1", "Updated AI/OCR and Connector settings")
     return jsonify({"message": "System settings saved and synced across nodes successfully."})
 
-# ==========================================
-# NOVEL OSINT GATHERING API ENDPOINTS
-# ==========================================
-@app.route('/api/osint/phone', methods=['GET'])
-def api_osint_phone():
-    q = request.args.get('q', '').strip()
-    if not q: return jsonify({"error": "Missing phone query parameter."}), 400
-    try:
-        return jsonify(run_phone_osint(q)), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-@app.route('/api/osint/email', methods=['GET'])
-def api_osint_email():
-    q = request.args.get('q', '').strip()
-    if not q: return jsonify({"error": "Missing email query parameter."}), 400
-    try:
-        return jsonify(run_email_osint(q)), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-@app.route('/api/osint/upi', methods=['GET'])
-def api_osint_upi():
-    q = request.args.get('q', '').strip()
-    if not q: return jsonify({"error": "Missing UPI handle query parameter."}), 400
-    try:
-        return jsonify(run_upi_osint(q)), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-@app.route('/api/osint/ip', methods=['GET'])
-def api_osint_ip():
-    q = request.args.get('q', '').strip()
-    if not q: return jsonify({"error": "Missing IP query parameter."}), 400
-    try:
-        return jsonify(run_ip_osint(q)), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-@app.route('/api/osint/username', methods=['GET'])
-def api_osint_username():
-    q = request.args.get('q', '').strip()
-    if not q: return jsonify({"error": "Missing username query parameter."}), 400
-    try:
-        return jsonify(run_username_osint(q)), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-@app.route('/api/osint/image-forensics', methods=['POST', 'GET'])
-def api_osint_image():
-    try:
-        if request.method == 'POST':
-            if 'file' in request.files and request.files['file'].filename != '':
-                return jsonify(run_image_forensics(file_storage=request.files['file'])), 200
-            data = request.get_json(silent=True) or {}
-            if 'url' in data and data['url']:
-                return jsonify(run_image_forensics(image_url_query=data['url'])), 200
-            return jsonify({"error": "No image file or URL provided."}), 400
-        else:
-            q = request.args.get('q', '').strip()
-            if not q: return jsonify({"error": "Missing image URL parameter."}), 400
-            return jsonify(run_image_forensics(image_url_query=q)), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+# Note: OSINT Gathering routes (/api/osint/*) are now handled by osint_bp in osint_blueprint.py
 
 
 if __name__ == "__main__":
