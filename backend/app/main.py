@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify, send_from_directory
 # pyrefly: ignore [missing-import]
 from werkzeug.utils import secure_filename
 from .database import get_db_connection, hash_password, initialize_database
-from .analysis import compute_sha256, extract_pdf_text, extract_entities_from_text, analyze_transaction_graph, sanitize_string
+from .analysis import compute_sha256, extract_pdf_text, extract_image_ocr, extract_entities_from_text, analyze_transaction_graph, sanitize_string
 
 app = Flask(__name__)
 
@@ -290,7 +290,10 @@ def upload_evidence(case_id):
                 # Read CSV preview as text
                 with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
                     ocr_text = f.read()
-            else: # Image or TXT
+            elif ftype == 'image':
+                with open(fpath, "rb") as f:
+                    ocr_text = extract_image_ocr(f.read(), filename)
+            else: # TXT
                 with open(fpath, "r", errors="ignore") as f:
                     ocr_text = f.read()
             
