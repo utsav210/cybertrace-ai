@@ -5,7 +5,7 @@ import { Search, Globe, Phone, Mail, CreditCard, Landmark, Key, Server, User, Li
 import clsx from 'clsx';
 import { useThemeStore } from '../store/themeStore';
 
-type OSINTTab = 'phone' | 'email' | 'upi' | 'bank' | 'password' | 'ip' | 'username' | 'domain' | 'vehicle' | 'darkweb' | 'image';
+type OSINTTab = 'phone' | 'email' | 'upi' | 'bank' | 'password' | 'ip' | 'username' | 'domain' | 'darkweb' | 'image';
 
 interface ScanResult {
   status: 'idle' | 'scanning' | 'success' | 'error';
@@ -31,7 +31,6 @@ export const OSINTPage: React.FC = () => {
     { id: 'ip', label: t('osint.ip', 'IP / Location'), icon: Server },
     { id: 'username', label: t('osint.username', 'Username OSINT'), icon: User },
     { id: 'domain', label: t('osint.domain', 'Domain / DNS'), icon: LinkIcon },
-    { id: 'vehicle', label: t('osint.vehicle', 'Vehicle / RTO'), icon: Car },
     { id: 'darkweb', label: t('osint.darkweb', 'Dark Web Monitor'), icon: ScanEye },
     { id: 'image', label: t('osint.image', 'Image Forensics'), icon: ImageIcon },
   ] as const;
@@ -184,23 +183,6 @@ export const OSINTPage: React.FC = () => {
           };
           break;
           
-        case 'vehicle':
-          if (q.length < 6) throw new Error('Invalid license plate format (e.g., GJ01XX9999).');
-          await new Promise(r => setTimeout(r, 2500));
-          const states = { 'GJ': 'Gujarat', 'RJ': 'Rajasthan', 'MH': 'Maharashtra', 'DL': 'Delhi' };
-          const stateCode = q.substring(0, 2).toUpperCase();
-          const stateName = states[stateCode as keyof typeof states] || 'Unknown State';
-          data = {
-            registrationNo: q.toUpperCase(),
-            ownerName: 'V*** D*** (Masked for privacy)',
-            rto: `${stateName} RTO`,
-            vehicleClass: h % 2 === 0 ? 'Motor Cycle / Scooter (2WN)' : 'Motor Car (LMV)',
-            fuelType: h % 3 === 0 ? 'Diesel' : 'Petrol',
-            insuranceValidUpTo: `202${5+(h%5)}-12-31`,
-            pendingChallans: h % 4 === 0 ? 'Yes (₹1,500 pending)' : 'No pending challans'
-          };
-          break;
-          
         case 'darkweb':
           await new Promise(r => setTimeout(r, 3000));
           const leakCount = h % 5;
@@ -242,7 +224,6 @@ export const OSINTPage: React.FC = () => {
       case 'ip': return `intitle:"index of" "${query}"`;
       case 'username': return `inurl:"${query}" site:instagram.com OR site:twitter.com`;
       case 'domain': return `site:${query} ext:pdf OR ext:docx OR ext:xls filetype:env`;
-      case 'vehicle': return `"${query}" OR "${query.replace(/-/g, '')}" site:parivahan.gov.in`;
       case 'darkweb': return `site:pastebin.com OR site:ghostbin.com "${query}"`;
       case 'image': return `Images cannot be dorked via text. Use Google Reverse Image Search.`;
       default: return `"${query}" (OSINT Target)`;
