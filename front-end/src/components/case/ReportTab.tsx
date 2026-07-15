@@ -76,22 +76,15 @@ AI-આધારિત વ્યવહાર વિશ્લેષણે 4 બૅ
 
 export const ReportTab: React.FC<Props> = ({ case_ }) => {
   const { t, i18n } = useTranslation();
-  const currentLang = (i18n.language || 'en').slice(0, 2) as 'en' | 'hi' | 'gu';
-  const [language, setLanguage] = useState<'en' | 'hi' | 'gu'>(
-    ['en', 'hi', 'gu'].includes(currentLang) ? currentLang : 'en'
-  );
 
-  // Sync local language selector from i18n only when i18n.language changes externally
-  // (e.g., user switches language via global header switcher, not via this radio).
-  // IMPORTANT: Do NOT call i18n.changeLanguage() inside this effect — that triggers
-  // the effect again causing "Maximum update depth exceeded" infinite loop.
-  React.useEffect(() => {
-    const lang = (i18n.language || 'en').slice(0, 2) as 'en' | 'hi' | 'gu';
-    if (['en', 'hi', 'gu'].includes(lang) && lang !== language) {
-      setLanguage(lang as 'en' | 'hi' | 'gu');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n.language]);
+  // localLang: explicit user selection within this Report tab (overrides global i18n).
+  // null = "follow global i18n". This is NEVER set inside any useEffect to avoid infinite loops.
+  const [localLang, setLocalLang] = useState<'en' | 'hi' | 'gu' | null>(null);
+
+  // Pure derived computation — no useEffect, no state sync, no infinite loop risk.
+  const i18nBase = (i18n.language || 'en').slice(0, 2);
+  const safeI18nLang: 'en' | 'hi' | 'gu' = (['en', 'hi', 'gu'].includes(i18nBase) ? i18nBase : 'en') as 'en' | 'hi' | 'gu';
+  const language: 'en' | 'hi' | 'gu' = localLang ?? safeI18nLang;
 
   const [generating, setGenerating] = useState(false);
   const [showReport, setShowReport] = useState(false);
@@ -154,7 +147,10 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
     win.document.close();
   };
 
-  const alerts = useCaseStore((s) => s.fraudAlerts.filter((a) => a.caseId === case_.id));
+  const allAlerts = useCaseStore((s) => s.fraudAlerts);
+  const alerts = React.useMemo(() => 
+    allAlerts.filter((a) => a.caseId === case_.id), 
+  [allAlerts, case_.id]);
   const intelReport = React.useMemo(() => computeLegalIntelligenceMatrix(case_, alerts, language), [case_, alerts, language]);
 
   const firPreviewLines = [
@@ -209,7 +205,7 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
               style={{ background: language === lang ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.03)' }}
             >
               <input type="radio" name="language" value={lang} checked={language === lang}
-                onChange={() => { setLanguage(lang); }} className="hidden" />
+                onChange={() => { setLocalLang(lang); }} className="hidden" />
               <div className={clsx('w-4 h-4 rounded-full border-2 flex items-center justify-center',
                 language === lang ? 'border-amber-400' : 'border-white/20'
               )}>
