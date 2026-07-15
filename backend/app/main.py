@@ -9,11 +9,8 @@ from flask import Flask, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 from .database import get_db_connection, hash_password, initialize_database
 from .analysis import compute_sha256, extract_pdf_text, extract_entities_from_text, analyze_transaction_graph, sanitize_string
-from .osint_engine import run_phone_osint, run_email_osint, run_upi_osint, run_ip_osint, run_username_osint, run_image_forensics
-from .osint_blueprint import osint_bp
 
 app = Flask(__name__)
-app.register_blueprint(osint_bp)
 
 # Ensure upload directory exists
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")
@@ -1087,9 +1084,6 @@ def save_settings():
     
     create_audit_log("admin", "SETTINGS_UPDATED", "System Config", request.remote_addr or "127.0.0.1", "Updated AI/OCR and Connector settings")
     return jsonify({"message": "System settings saved and synced across nodes successfully."})
-
-# Note: OSINT Gathering routes (/api/osint/*) are now handled by osint_bp in osint_blueprint.py
-
 
 if __name__ == "__main__":
     initialize_database()

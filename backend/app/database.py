@@ -167,48 +167,6 @@ def initialize_database():
     );
     """)
 
-    # 11. Create OSINT Scans Table (Async Job Queue & Audit Tracking under DPDP Act 2023 & 2025)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS osint_scans (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        module TEXT NOT NULL,
-        target TEXT NOT NULL,
-        target_hash TEXT NOT NULL,
-        attestation INTEGER NOT NULL DEFAULT 1,
-        status TEXT NOT NULL CHECK(status IN ('pending', 'running', 'completed', 'error', 'purged')),
-        created_at TEXT NOT NULL,
-        completed_at TEXT,
-        error_message TEXT
-    );
-    """)
-
-    # 12. Create OSINT Results Table (Normalized JSON outputs & Retention management)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS osint_results (
-        id TEXT PRIMARY KEY,
-        scan_id TEXT NOT NULL,
-        source TEXT NOT NULL,
-        raw_json TEXT,
-        normalized_json TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (scan_id) REFERENCES osint_scans(id) ON DELETE CASCADE
-    );
-    """)
-
-    # 13. Create OSINT Audit Logs Table (Immutable regulatory audit log under DPDP Act 2023 & 2025)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS osint_audit_logs (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        module TEXT NOT NULL,
-        target_hash TEXT NOT NULL,
-        attestation TEXT NOT NULL,
-        timestamp TEXT NOT NULL,
-        ip TEXT NOT NULL
-    );
-    """)
-
     conn.commit()
 
     # Ensure settings default row exists

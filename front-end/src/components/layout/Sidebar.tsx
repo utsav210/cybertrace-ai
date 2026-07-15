@@ -29,7 +29,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     : [
         { icon: LayoutDashboard, label: t('nav.dashboard'), to: '/dashboard' },
         { icon: FolderOpen, label: t('nav.cases'), to: '/cases' },
-        { icon: Globe, label: t('nav.osint', 'OSINT Gathering'), to: '/osint' },
         { icon: ShieldAlert, label: t('nav.analytics', 'Threat Intel'), to: '/analytics' },
         { icon: Users, label: t('nav.portal', 'Citizen Portal'), to: '/portal' },
         ...(user?.role === 'admin' ? [{ icon: ScrollText, label: t('nav.audit'), to: '/admin/audit' }] : []),
@@ -81,30 +80,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                 </span>
                 {open && <ChevronRight size={14} className="ml-auto opacity-30" />}
               </NavLink>
-
-              {/* Expandable OSINT sub-menu when sidebar is open */}
-              {open && item.to === '/osint' && (
-                <div className="ml-7 mt-1 space-y-1 border-l border-white/10 pl-2">
-                  {[
-                    { label: 'Username OSINT', tab: 'username' },
-                    { label: 'Domain / DNS', tab: 'domain' },
-                    { label: 'IP / Network', tab: 'ip' },
-                    { label: 'Email OSINT', tab: 'email' },
-                    { label: 'Phone OSINT', tab: 'phone' },
-                    { label: 'UPI ID OSINT', tab: 'upi' },
-                    { label: 'Image Forensics', tab: 'image' },
-                    { label: 'Audit History', tab: 'history' },
-                  ].map((sub) => (
-                    <NavLink
-                      key={sub.tab}
-                      to={`/osint`}
-                      className="block py-1 px-2.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-white/05 transition-all"
-                    >
-                      • {sub.label}
-                    </NavLink>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
         </nav>
