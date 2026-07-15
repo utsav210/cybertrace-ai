@@ -25,7 +25,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, ch
   if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     const handleReturnHome = () => {
       if (user.role === 'citizen') {
-        navigate('/portal', { replace: true });
+        navigate('/citizen-portal', { replace: true });
       } else if (user.role === 'admin') {
         navigate('/admin/audit', { replace: true });
       } else {

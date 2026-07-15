@@ -472,15 +472,33 @@
   border: 1px solid rgba(37, 99, 235, 0.3) !important;
 }
 
-/* Light Theme Text & Utility Color Mapping */
-.theme-light .text-white { color: #0F172A !important; }
-.theme-light .text-white\/90 { color: #1E293B !important; }
-.theme-light .text-white\/80 { color: #334155 !important; }
-.theme-light .text-white\/70 { color: #475569 !important; }
-.theme-light .text-white\/60 { color: #64748B !important; }
-.theme-light .text-white\/50 { color: #64748B !important; }
+/* Comprehensive Light Theme Text & Utility Color Mapping */
+.theme-light .text-white,
+.theme-light .text-white\/95,
+.theme-light .text-white\/90 { color: #0F172A !important; }
+
+.theme-light .text-white\/85,
+.theme-light .text-white\/80,
+.theme-light .text-white\/75 { color: #334155 !important; }
+
+.theme-light .text-white\/70,
+.theme-light .text-white\/65,
+.theme-light .text-white\/60 { color: #475569 !important; }
+
+.theme-light .text-white\/55,
+.theme-light .text-white\/50,
+.theme-light .text-white\/45,
 .theme-light .text-white\/40 { color: #64748B !important; }
-.theme-light .text-white\/20 { color: #94A3B8 !important; }
+
+.theme-light .text-white\/35,
+.theme-light .text-white\/30,
+.theme-light .text-white\/25,
+.theme-light .text-white\/20,
+.theme-light .text-white\/15,
+.theme-light .text-white\/10 { color: #94A3B8 !important; }
+
+.theme-light [class*="text-white/"] { color: #475569 !important; }
+
 
 /* Ensure primary & colored action buttons retain crisp white text in Light Theme */
 .theme-light button[style*="linear-gradient"],
@@ -536,7 +554,6 @@
   color: #0F172A !important;
 }
 
-/* Inputs, Textareas, and Selects in Light Theme */
 .theme-light input,
 .theme-light textarea,
 .theme-light select {
@@ -544,6 +561,16 @@
   color: #0F172A !important;
   border: 1px solid #94A3B8 !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.theme-light option {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+}
+
+.theme-dark option {
+  background-color: #0f1d3d !important;
+  color: #ffffff !important;
 }
 
 .theme-light input::placeholder,

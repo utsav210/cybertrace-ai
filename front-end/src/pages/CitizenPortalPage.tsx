@@ -152,11 +152,16 @@ export const CitizenPortalPage: React.FC = () => {
     }
   };
 
-  const filteredTickets = complaints.filter((c) =>
-    c.id.toLowerCase().includes(searchTicketId.toLowerCase()) ||
-    c.complainantName.toLowerCase().includes(searchTicketId.toLowerCase()) ||
-    c.complainantPhone.includes(searchTicketId)
-  );
+  const isCitizenView = !user || user.role === 'citizen';
+  const isSearchEmpty = !searchTicketId.trim();
+
+  const filteredTickets = complaints.filter((c) => {
+    if (isCitizenView && isSearchEmpty) return false;
+    return (
+      c.id.toLowerCase().includes(searchTicketId.trim().toLowerCase()) ||
+      (!isCitizenView && (c.complainantName.toLowerCase().includes(searchTicketId.trim().toLowerCase()) || c.complainantPhone.includes(searchTicketId.trim())))
+    );
+  });
 
   const currentLang = i18n.language || 'en';
 
@@ -275,14 +280,15 @@ export const CitizenPortalPage: React.FC = () => {
                   <CheckCircle2 size={36} />
                 </div>
                 <h3 className="text-xl font-extrabold text-white">{t('portal.successTitle', 'Complaint Registered Successfully!')}</h3>
-                <p className="text-sm text-white/70 max-w-md mx-auto">
-                  {t('portal.successText', 'Your incident has been transmitted to the Cyber Crime Branch intake queue. Please save your tracking ticket number below:')}
+                <p className="text-sm text-white/70 max-w-md mx-auto leading-relaxed">
+                  {t('portal.successText', 'Your incident has been recorded and transmitted to the National Cyber Crime Portal (NCRP). Please save your assigned Case ID below to track real-time progress:')}
                 </p>
-                <div className="p-4 rounded-2xl bg-black/40 border border-amber-400/30 inline-block px-8">
-                  <div className="text-xs text-white/50 uppercase tracking-widest font-mono">NCRP Ticket Number</div>
-                  <div className="text-2xl font-black font-mono text-amber-400 mt-1">{submittedTicket.id}</div>
+                <div className="p-5 rounded-2xl bg-black/40 border border-amber-400/30 inline-block px-8 shadow-lg">
+                  <div className="text-xs text-white/50 uppercase tracking-widest font-mono font-bold">Assigned Case ID / Ticket Number</div>
+                  <div className="text-3xl font-black font-mono text-amber-400 mt-1">{submittedTicket.id}</div>
+                  <div className="text-xs text-green-400 font-semibold mt-2">● Status: {submittedTicket.status}</div>
                 </div>
-                <div className="pt-4 flex justify-center gap-3">
+                <div className="pt-4 flex flex-wrap justify-center gap-3">
                   <button
                     onClick={() => { setSubmittedTicket(null); }}
                     className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 text-white hover:bg-white/15 transition-all"
@@ -290,10 +296,13 @@ export const CitizenPortalPage: React.FC = () => {
                     {t('portal.registerAnother', 'Register Another Incident')}
                   </button>
                   <button
-                    onClick={() => setActiveTab('track')}
-                    className="px-5 py-2.5 rounded-xl text-xs font-semibold btn-accent flex items-center gap-2"
+                    onClick={() => {
+                      setSearchTicketId(submittedTicket.id);
+                      setActiveTab('track');
+                    }}
+                    className="px-5 py-2.5 rounded-xl text-xs font-semibold btn-accent flex items-center gap-2 shadow-md"
                   >
-                    {t('portal.trackQueue', 'Track Ticket Queue')} <ArrowRight size={14} />
+                    {t('portal.checkStatusBtn', 'Search & Check My Case Status')} <ArrowRight size={14} />
                   </button>
                 </div>
               </div>
@@ -335,14 +344,14 @@ export const CitizenPortalPage: React.FC = () => {
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="form-input w-full bg-[#0f1d3d]"
+                      className="form-input w-full"
                     >
-                      <option value="Financial Fraud / UPI Scam" style={{ background: '#0f1d3d' }}>Financial Fraud / UPI Scam</option>
-                      <option value="Online Shopping / Fake OTP" style={{ background: '#0f1d3d' }}>Online Shopping / Fake OTP</option>
-                      <option value="Social Media Impersonation" style={{ background: '#0f1d3d' }}>Social Media Impersonation</option>
-                      <option value="Investment / Crypto Scam" style={{ background: '#0f1d3d' }}>Investment / Crypto Scam</option>
-                      <option value="Digital Arrest / Extortion" style={{ background: '#0f1d3d' }}>Digital Arrest / Extortion</option>
-                      <option value="Job Offer / Task Fraud" style={{ background: '#0f1d3d' }}>Job Offer / Task Fraud</option>
+                      <option value="Financial Fraud / UPI Scam">Financial Fraud / UPI Scam</option>
+                      <option value="Online Shopping / Fake OTP">Online Shopping / Fake OTP</option>
+                      <option value="Social Media Impersonation">Social Media Impersonation</option>
+                      <option value="Investment / Crypto Scam">Investment / Crypto Scam</option>
+                      <option value="Digital Arrest / Extortion">Digital Arrest / Extortion</option>
+                      <option value="Job Offer / Task Fraud">Job Offer / Task Fraud</option>
                     </select>
                   </div>
                   <div>
@@ -427,10 +436,22 @@ export const CitizenPortalPage: React.FC = () => {
                 <p className="text-xs text-white/50 font-mono">Fetching active citizen complaint tickets...</p>
               </div>
             ) : filteredTickets.length === 0 ? (
-              <div className="text-center py-12 glass-card text-white/40">
-                <FileText size={40} className="mx-auto mb-2 opacity-30" />
-                <p className="text-sm font-semibold">No complaints found matching filter</p>
-              </div>
+              isCitizenView && isSearchEmpty ? (
+                <div className="text-center py-12 glass-card space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-amber-400/10 border border-amber-400/30 flex items-center justify-center mx-auto text-amber-400 shadow-md">
+                    <Search size={32} />
+                  </div>
+                  <h4 className="text-base font-bold text-white">Enter Case ID to Track Status</h4>
+                  <p className="text-xs text-white/60 max-w-sm mx-auto leading-relaxed">
+                    To protect citizen privacy and confidentiality, please enter your exact assigned Case ID / Ticket Number (e.g. NCRP-2026-88912) in the search bar above to view the live status of your case.
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-12 glass-card text-white/40">
+                  <FileText size={40} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm font-semibold">No complaints found matching "{searchTicketId}"</p>
+                </div>
+              )
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {filteredTickets.map((ticket) => (
@@ -449,7 +470,11 @@ export const CitizenPortalPage: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-sm font-semibold text-white mt-1">
-                        Complainant: {ticket.complainantName} <span className="text-white/40 font-normal">({ticket.complainantPhone})</span>
+                        {isCitizenView ? (
+                          <span>Complainant: {ticket.complainantName}</span>
+                        ) : (
+                          <span>Complainant: {ticket.complainantName} <span className="text-white/40 font-normal">({ticket.complainantPhone})</span></span>
+                        )}
                       </p>
                       <p className="text-xs text-white/70 leading-relaxed line-clamp-2 mt-1">
                         "{ticket.description}"
@@ -460,26 +485,41 @@ export const CitizenPortalPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Officer Action: Auto-Convert to Case */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-white/08">
-                      {ticket.assignedCaseId ? (
-                        <button
-                          onClick={() => navigate(`/cases/${ticket.assignedCaseId}`)}
-                          className="px-4 py-2 rounded-xl text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20 transition-all flex items-center justify-center gap-2"
-                        >
-                          <Briefcase size={14} /> View Active Case
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleConvertToCase(ticket.id)}
-                          disabled={convertingId === ticket.id}
-                          className="px-4 py-2 rounded-xl text-xs font-bold btn-accent flex items-center justify-center gap-2 shadow-md hover:shadow-amber-500/20 disabled:opacity-50"
-                        >
-                          {convertingId === ticket.id ? <Loader2 size={14} className="animate-spin" /> : <Briefcase size={14} />}
-                          Convert to Investigation Case
-                        </button>
-                      )}
-                    </div>
+                    {/* Status Display or Officer Action: Auto-Convert to Case */}
+                    {isCitizenView ? (
+                      <div className="flex flex-col items-start sm:items-end gap-1.5 flex-shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-white/08">
+                        <span className="text-[10px] text-white/50 uppercase tracking-wider font-mono font-bold">Investigation Status</span>
+                        <div className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 ${
+                          ticket.assignedCaseId ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}>
+                          <CheckCircle2 size={14} />
+                          {ticket.status}
+                        </div>
+                        {ticket.assignedCaseId && (
+                          <span className="text-[11px] text-green-400 font-mono font-bold">FIR / Active Case: {ticket.assignedCaseId}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-white/08">
+                        {ticket.assignedCaseId ? (
+                          <button
+                            onClick={() => navigate(`/cases/${ticket.assignedCaseId}`)}
+                            className="px-4 py-2 rounded-xl text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20 transition-all flex items-center justify-center gap-2"
+                          >
+                            <Briefcase size={14} /> View Active Case
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleConvertToCase(ticket.id)}
+                            disabled={convertingId === ticket.id}
+                            className="px-4 py-2 rounded-xl text-xs font-bold btn-accent flex items-center justify-center gap-2 shadow-md hover:shadow-amber-500/20 disabled:opacity-50"
+                          >
+                            {convertingId === ticket.id ? <Loader2 size={14} className="animate-spin" /> : <Briefcase size={14} />}
+                            Convert to Investigation Case
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

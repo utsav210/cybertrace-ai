@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next';
 import { Maximize2, AlertTriangle, Info, TrendingUp, TrendingDown, X } from 'lucide-react';
 import { useCaseStore } from '../../store/caseStore';
+import { useThemeStore } from '../../store/themeStore';
 import type { GraphNode, GraphLink } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -117,6 +118,8 @@ function edgePath(sx: number, sy: number, tx: number, ty: number, curve: number,
 export const MoneyTrailTab: React.FC = () => {
   const { t } = useTranslation();
   const { graphNodes, graphLinks } = useCaseStore();
+  const { theme } = useThemeStore();
+  const isLight = theme === 'light';
   const containerRef = useRef<HTMLDivElement>(null);
   const [dims, setDims] = useState({ w: 700, h: 480 });
   const [positions, setPositions] = useState<NodePos[]>([]);
@@ -230,8 +233,8 @@ export const MoneyTrailTab: React.FC = () => {
 
   if (positions.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 gap-2 text-white/30 text-sm">
-        <div className="w-5 h-5 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+      <div className={`flex items-center justify-center h-64 gap-2 text-sm font-medium ${isLight ? 'text-slate-600' : 'text-white/30'}`}>
+        <div className={`w-5 h-5 border-2 rounded-full animate-spin ${isLight ? 'border-slate-300 border-t-blue-600' : 'border-white/20 border-t-white/60'}`} />
         Building graph…
       </div>
     );
@@ -244,8 +247,10 @@ export const MoneyTrailTab: React.FC = () => {
         <button onClick={fitView} className="btn-primary">
           <Maximize2 size={14} /> {t('moneyTrail.fitView')}
         </button>
-        <span className="text-xs text-white/30 italic">Drag nodes to rearrange · Click a node to inspect</span>
-        <div className="ml-auto flex items-center gap-4 text-xs text-white/40">
+        <span className={`text-xs italic ${isLight ? 'text-slate-600 font-medium' : 'text-white/30'}`}>
+          Drag nodes to rearrange · Click a node to inspect
+        </span>
+        <div className={`ml-auto flex items-center gap-4 text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/40'}`}>
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full" style={{ background: '#DC2626', boxShadow: '0 0 6px #DC262688' }} />
             {t('moneyTrail.suspicious')}
@@ -255,7 +260,7 @@ export const MoneyTrailTab: React.FC = () => {
             {t('moneyTrail.normal')}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-8 border-t-2 border-dashed border-amber-400" />
+            <span className="w-8 border-t-2 border-dashed border-amber-500" />
             {t('moneyTrail.circular')}
           </span>
         </div>
@@ -267,7 +272,9 @@ export const MoneyTrailTab: React.FC = () => {
         {/* Graph */}
         <div
           ref={containerRef}
-          className="flex-1 glass-card overflow-hidden"
+          className={`flex-1 overflow-hidden rounded-2xl border transition-all ${
+            isLight ? 'bg-white border-slate-300 shadow-sm' : 'glass-card border-white/10'
+          }`}
           style={{ height: 480, minWidth: 0 }}
         >
           <svg
@@ -328,15 +335,15 @@ export const MoneyTrailTab: React.FC = () => {
                   <path
                     d={d}
                     fill="none"
-                    stroke={link.circular ? '#F59E0B' : 'rgba(148,163,184,0.45)'}
+                    stroke={link.circular ? '#F59E0B' : (isLight ? '#64748B' : 'rgba(148,163,184,0.45)')}
                     strokeWidth={link.circular ? 2 : Math.max(1.2, Math.min(link.totalAmount / 18000, 3))}
                     strokeDasharray={link.circular ? '7 5' : undefined}
                     markerEnd={`url(#${link.circular ? 'arr-circular' : 'arr-normal'})`}
                     style={{ transition: 'stroke 0.3s' }}
                   />
                   {/* Amount label */}
-                  <text fontSize="9" fill={link.circular ? '#F59E0B' : 'rgba(255,255,255,0.5)'}
-                    style={{ pointerEvents: 'none', userSelect: 'none', fontFamily: 'Inter,sans-serif', fontWeight: 600 }}>
+                  <text fontSize="9.5" fill={link.circular ? '#D97706' : (isLight ? '#0F172A' : 'rgba(255,255,255,0.7)')}
+                    style={{ pointerEvents: 'none', userSelect: 'none', fontFamily: 'Inter,sans-serif', fontWeight: 700 }}>
                     <textPath href={`#tp-${i}`} startOffset="50%" textAnchor="middle">
                       {formatINR(link.totalAmount)}
                     </textPath>
@@ -413,21 +420,28 @@ export const MoneyTrailTab: React.FC = () => {
 
                   {/* Label pill below */}
                   {(() => {
-                    const w = Math.max(node.id.length * 6.2, 72);
+                    const w = Math.max(node.id.length * 6.8, 76);
                     const labelY = r + 7;
-                    const h = labelLines.length > 1 ? 28 : 16;
+                    const h = labelLines.length > 1 ? 30 : 18;
                     return (
                       <g style={{ pointerEvents: 'none' }}>
-                        <rect x={-w / 2} y={labelY} width={w} height={h} rx={5}
-                          fill="rgba(10,17,40,0.82)" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
-                        <text textAnchor="middle" y={labelY + 10.5} fontSize="8.5" fontWeight="bold"
-                          fill="rgba(255,255,255,0.92)"
+                        <rect x={-w / 2} y={labelY} width={w} height={h} rx={6}
+                          fill={isLight ? '#FFFFFF' : 'rgba(10,17,40,0.88)'}
+                          stroke={isLight ? '#94A3B8' : 'rgba(255,255,255,0.15)'}
+                          strokeWidth={isLight ? '1.2' : '0.5'}
+                          style={{ filter: isLight ? 'drop-shadow(0px 2px 4px rgba(0,0,0,0.12))' : 'none' }} />
+                        <text textAnchor="middle" y={labelY + 11.5} fontSize="9" fontWeight="800"
+                          fill={isLight ? '#0F172A' : 'rgba(255,255,255,0.95)'}
                           style={{ fontFamily: 'Inter,sans-serif', userSelect: 'none' }}>
                           {labelLines[0]}
                         </text>
                         {labelLines[1] && (
-                          <text textAnchor="middle" y={labelY + 22} fontSize="7.5"
-                            fill="rgba(255,255,255,0.45)"
+                          <text textAnchor="middle" y={labelY + 23.5} fontSize="8" fontWeight="700"
+                            fill={
+                              isMule ? (isLight ? '#DC2626' : '#F87171') :
+                              isVictim ? (isLight ? '#2563EB' : '#60A5FA') :
+                              (isLight ? '#475569' : 'rgba(255,255,255,0.55)')
+                            }
                             style={{ fontFamily: 'Inter,sans-serif', userSelect: 'none' }}>
                             {labelLines[1]}
                           </text>
@@ -451,51 +465,53 @@ export const MoneyTrailTab: React.FC = () => {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 16, scale: 0.96 }}
                 transition={{ duration: 0.2 }}
-                className="glass-modal p-4 space-y-4"
+                className={`p-4 space-y-4 rounded-2xl border transition-all ${
+                  isLight ? 'bg-white border-slate-300 text-slate-900 shadow-md' : 'glass-modal border-white/15 text-white'
+                }`}
               >
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-1">
+                    <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isLight ? 'text-slate-600' : 'text-white/40'}`}>
                       {t('moneyTrail.nodeDetails')}
                     </p>
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <span className="text-lg">{NODE_ICONS[selectedNode.type] || '?'}</span>
-                      <span className="font-mono text-sm font-bold text-white break-all leading-tight">
+                      <span className={`font-mono text-sm font-black break-all leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                         {selectedNode.id}
                       </span>
                     </div>
-                    <span className="text-xs text-white/40">{selectedNode.bank}</span>
+                    <span className={`text-xs font-medium ${isLight ? 'text-slate-600' : 'text-white/40'}`}>{selectedNode.bank}</span>
                   </div>
                   <button onClick={() => setSelectedNode(null)}
-                    className="p-1.5 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0">
-                    <X size={13} className="text-white/40" />
+                    className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${isLight ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/10 text-white/40'}`}>
+                    <X size={13} />
                   </button>
                 </div>
 
                 {/* Type badge */}
                 <div>
                   {selectedNode.type === 'mule' && (
-                    <span className="inline-flex items-center gap-1 text-xs text-red-400 px-2.5 py-1 rounded-full border border-red-400/30"
-                      style={{ background: 'rgba(220,38,38,0.12)' }}>
+                    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border ${isLight ? 'text-red-700 bg-red-100 border-red-300' : 'text-red-400 border-red-400/30'}`}
+                      style={!isLight ? { background: 'rgba(220,38,38,0.12)' } : undefined}>
                       <AlertTriangle size={10} /> {t('moneyTrail.muleAccount', 'Mule Account')}
                     </span>
                   )}
                   {selectedNode.type === 'victim' && (
-                    <span className="inline-flex items-center gap-1 text-xs text-blue-400 px-2.5 py-1 rounded-full border border-blue-400/30"
-                      style={{ background: 'rgba(59,130,246,0.12)' }}>
+                    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border ${isLight ? 'text-blue-700 bg-blue-100 border-blue-300' : 'text-blue-400 border-blue-400/30'}`}
+                      style={!isLight ? { background: 'rgba(59,130,246,0.12)' } : undefined}>
                       <Info size={10} /> {t('moneyTrail.victim', 'Victim')}
                     </span>
                   )}
                   {selectedNode.type === 'beneficiary' && (
-                    <span className="inline-flex items-center gap-1 text-xs text-orange-400 px-2.5 py-1 rounded-full border border-orange-400/30"
-                      style={{ background: 'rgba(234,88,12,0.12)' }}>
+                    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border ${isLight ? 'text-orange-700 bg-orange-100 border-orange-300' : 'text-orange-400 border-orange-400/30'}`}
+                      style={!isLight ? { background: 'rgba(234,88,12,0.12)' } : undefined}>
                       <AlertTriangle size={10} /> {t('moneyTrail.finalBeneficiary', 'Final Beneficiary')}
                     </span>
                   )}
                   {selectedNode.type === 'unknown' && (
-                    <span className="inline-flex items-center gap-1 text-xs text-purple-400 px-2.5 py-1 rounded-full border border-purple-400/30"
-                      style={{ background: 'rgba(167,139,250,0.12)' }}>
+                    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border ${isLight ? 'text-purple-700 bg-purple-100 border-purple-300' : 'text-purple-400 border-purple-400/30'}`}
+                      style={!isLight ? { background: 'rgba(167,139,250,0.12)' } : undefined}>
                       {t('moneyTrail.unknownAccount', 'Unknown Account')}
                     </span>
                   )}
@@ -504,7 +520,7 @@ export const MoneyTrailTab: React.FC = () => {
                 {/* Risk Score */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-white/40">{t('moneyTrail.riskScore')}</span>
+                    <span className={`text-xs font-semibold ${isLight ? 'text-slate-600' : 'text-white/40'}`}>{t('moneyTrail.riskScore')}</span>
                     <motion.span
                       key={selectedNode.riskScore}
                       initial={{ opacity: 0, scale: 0.7 }}
@@ -513,10 +529,10 @@ export const MoneyTrailTab: React.FC = () => {
                       style={{ color: riskColor(selectedNode.riskScore) }}
                     >
                       {selectedNode.riskScore}
-                      <span className="text-xs font-normal text-white/30">/100</span>
+                      <span className={`text-xs font-normal ${isLight ? 'text-slate-400' : 'text-white/30'}`}>/100</span>
                     </motion.span>
                   </div>
-                  <div className="risk-bar-wrapper h-2.5 rounded-full">
+                  <div className={`risk-bar-wrapper h-2.5 rounded-full ${isLight ? 'bg-slate-200' : 'bg-white/10'}`}>
                     <motion.div
                       className="h-full rounded-full"
                       initial={{ width: 0 }}
@@ -532,22 +548,34 @@ export const MoneyTrailTab: React.FC = () => {
 
                 {/* Fan-in / Fan-out */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.15)' }}>
-                    <TrendingDown size={14} className="text-blue-400 mx-auto mb-1" />
-                    <div className="text-xl font-black text-white">{selectedNode.fanIn}</div>
-                    <div className="text-xs text-white/40 mt-0.5">{t('moneyTrail.fanIn')}</div>
+                  <div className="rounded-xl p-3 text-center transition-all"
+                    style={{
+                      background: isLight ? '#EFF6FF' : 'rgba(59,130,246,0.1)',
+                      border: isLight ? '1px solid #BFDBFE' : '1px solid rgba(59,130,246,0.15)'
+                    }}>
+                    <TrendingDown size={14} className="text-blue-600 mx-auto mb-1" />
+                    <div className={`text-xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedNode.fanIn}</div>
+                    <div className={`text-xs font-semibold mt-0.5 ${isLight ? 'text-blue-700' : 'text-white/40'}`}>{t('moneyTrail.fanIn')}</div>
                   </div>
-                  <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.15)' }}>
-                    <TrendingUp size={14} className="text-amber-400 mx-auto mb-1" />
-                    <div className="text-xl font-black text-white">{selectedNode.fanOut}</div>
-                    <div className="text-xs text-white/40 mt-0.5">{t('moneyTrail.fanOut')}</div>
+                  <div className="rounded-xl p-3 text-center transition-all"
+                    style={{
+                      background: isLight ? '#FEF3C7' : 'rgba(245,158,11,0.1)',
+                      border: isLight ? '1px solid #FDE68A' : '1px solid rgba(245,158,11,0.15)'
+                    }}>
+                    <TrendingUp size={14} className="text-amber-600 mx-auto mb-1" />
+                    <div className={`text-xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedNode.fanOut}</div>
+                    <div className={`text-xs font-semibold mt-0.5 ${isLight ? 'text-amber-700' : 'text-white/40'}`}>{t('moneyTrail.fanOut')}</div>
                   </div>
                 </div>
 
                 {/* Bank */}
-                <div className="rounded-lg px-3 py-2 text-sm" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <span className="text-xs text-white/40">{t('moneyTrail.bank')}: </span>
-                  <span className="text-white/80 font-medium">{selectedNode.bank}</span>
+                <div className="rounded-lg px-3 py-2 text-sm transition-all"
+                  style={{
+                    background: isLight ? '#F8FAFC' : 'rgba(255,255,255,0.04)',
+                    border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.06)'
+                  }}>
+                  <span className={`text-xs font-semibold ${isLight ? 'text-slate-600' : 'text-white/40'}`}>{t('moneyTrail.bank')}: </span>
+                  <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white/80'}`}>{selectedNode.bank}</span>
                 </div>
               </motion.div>
             ) : (
@@ -556,27 +584,34 @@ export const MoneyTrailTab: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="glass-card p-5 text-center flex flex-col items-center gap-3"
+                className={`p-5 text-center flex flex-col items-center gap-3 rounded-2xl border transition-all ${
+                  isLight ? 'bg-white border-slate-300 text-slate-900 shadow-sm' : 'glass-card border-white/10 text-white'
+                }`}
                 style={{ height: 480, justifyContent: 'center' }}
               >
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  style={{
+                    background: isLight ? '#F1F5F9' : 'rgba(255,255,255,0.04)',
+                    border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.08)'
+                  }}>
                   👆
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white/50">{t('moneyTrail.clickNode', 'Click any node')}</p>
-                  <p className="text-xs text-white/25 mt-1">{t('moneyTrail.clickNodeHint', 'to see account details, risk score & flow data')}</p>
+                  <p className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white/60'}`}>{t('moneyTrail.clickNode', 'Click any node')}</p>
+                  <p className={`text-xs font-medium mt-1 ${isLight ? 'text-slate-600' : 'text-white/30'}`}>{t('moneyTrail.clickNodeHint', 'to see account details, risk score & flow data')}</p>
                 </div>
                 <div className="mt-2 space-y-1.5 text-left w-full">
                   {graphNodes.map((n) => (
                     <button
                       key={n.id}
                       onClick={() => setSelectedNode(n)}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all hover:bg-white/08 text-left"
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all text-left font-mono ${
+                        isLight ? 'hover:bg-slate-100 text-slate-800 font-bold' : 'hover:bg-white/08 text-white/60'
+                      }`}
                     >
                       <span className="w-2 h-2 rounded-full flex-shrink-0"
                         style={{ background: NODE_COLORS[n.type] || '#94a3b8', boxShadow: n.type === 'mule' ? '0 0 5px #DC2626aa' : undefined }} />
-                      <span className="font-mono text-white/60 truncate">{n.id}</span>
+                      <span className="truncate">{n.id}</span>
                     </button>
                   ))}
                 </div>

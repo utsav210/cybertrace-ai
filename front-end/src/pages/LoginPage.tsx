@@ -217,15 +217,7 @@ export const LoginPage: React.FC = () => {
             <p className="text-xs text-white/30 text-center">
               💡 {t('login.demoHint')}
             </p>
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              <button
-                type="button"
-                onClick={() => { setUsername('citizen.desai'); setPassword('citizen123'); }}
-                className="text-xs py-2 px-1 rounded-lg text-emerald-400/80 hover:text-emerald-300 font-medium transition-colors text-center border border-emerald-500/20"
-                style={{ background: 'rgba(16,185,129,0.08)' }}
-              >
-                👤 Citizen Login
-              </button>
+            <div className="grid grid-cols-2 gap-2 mt-3">
               <button
                 type="button"
                 onClick={() => { setUsername('officer.raj'); setPassword('password123'); }}

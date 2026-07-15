@@ -25,6 +25,7 @@ export interface Case {
   createdAt: string;
   updatedAt: string;
   amountLost?: number;
+  category?: string;
 }
 
 export type EvidenceType = 'pdf' | 'image' | 'csv' | 'other';

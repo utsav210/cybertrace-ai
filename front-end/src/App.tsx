@@ -15,7 +15,7 @@ import './i18n';
 
 const IndexRedirector: React.FC = () => {
   const { user } = useAuthStore();
-  if (user?.role === 'citizen') return <Navigate to="/portal" replace />;
+  if (user?.role === 'citizen') return <Navigate to="/citizen-portal" replace />;
   if (user?.role === 'admin') return <Navigate to="/admin/audit" replace />;
   return <Navigate to="/dashboard" replace />;
 };
@@ -63,7 +63,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="settings" element={
-            <ProtectedRoute allowedRoles={['citizen', 'officer', 'supervisor', 'admin']}>
+            <ProtectedRoute allowedRoles={['officer', 'supervisor', 'admin']}>
               <SettingsPage />
             </ProtectedRoute>
           } />
