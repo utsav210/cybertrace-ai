@@ -172,7 +172,12 @@
     "upi": "UPI ID OSINT",
     "bank": "Bank / IFSC",
     "password": "Password Breach",
-    "ip": "IP / Location"
+    "ip": "IP / Location",
+    "username": "Username OSINT",
+    "domain": "Domain / DNS",
+    "vehicle": "Vehicle / RTO",
+    "darkweb": "Dark Web Monitor",
+    "image": "Image Forensics"
   },
   "audit": {
     "title": "Audit Log",

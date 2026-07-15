@@ -172,7 +172,12 @@
     "upi": "UPI આઈડી OSINT",
     "bank": "બેંક / IFSC",
     "password": "પાસવર્ડ ભંગ (Breach)",
-    "ip": "IP / સ્થાન (Location)"
+    "ip": "IP / સ્થાન (Location)",
+    "username": "વપરાશકર્તા નામ OSINT",
+    "domain": "ડોમેન / DNS",
+    "vehicle": "વાહન / RTO",
+    "darkweb": "ડાર્ક વેબ મોનિટર",
+    "image": "છબી ફોરેન્સિક (Image)"
   },
   "audit": {
     "title": "ઓડિટ લૉગ",
