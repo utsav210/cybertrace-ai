@@ -37,6 +37,23 @@ export const OSINTPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Helper to safely parse API responses without crashing on HTML pages (like 404/500 Vite proxy fallbacks)
+  const safeParseResponse = async (res: Response) => {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return await res.json();
+    }
+    const text = await res.text();
+    if (res.status === 404) {
+      throw new Error('OSINT API endpoint not found (Backend server may need restart).');
+    }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('Unauthorized or session expired. Please log in as an authorized Law Enforcement Officer.');
+    }
+    const cleanText = text.replace(/<[^>]*>?/gm, ' ').trim();
+    throw new Error(`Server returned status ${res.status}: ${cleanText.substring(0, 120)}...`);
+  };
+
   // Fetch provider status on mount
   useEffect(() => {
     const fetchStatus = async () => {
@@ -46,7 +63,7 @@ export const OSINTPage: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
-          const data = await res.json();
+          const data = await safeParseResponse(res);
           setProviderConfig(data);
         }
       } catch (err) {
@@ -68,7 +85,7 @@ export const OSINTPage: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
-          const data = await res.json();
+          const data = await safeParseResponse(res);
           setJobStatus(data.status);
           if (data.status === 'completed') {
             setResultData(data.result);
@@ -133,12 +150,16 @@ export const OSINTPage: React.FC = () => {
       }
 
       if (res.ok || res.status === 202) {
-        const data = await res.json();
+        const data = await safeParseResponse(res);
         setActiveJobId(data.jobId);
         setJobStatus(data.status || 'pending');
       } else {
-        const errData = await res.json();
-        setErrorMessage(errData.error || 'Failed to submit OSINT scan job.');
+        try {
+          const errData = await safeParseResponse(res);
+          setErrorMessage(errData.error || 'Failed to submit OSINT scan job.');
+        } catch (parseErr: any) {
+          setErrorMessage(parseErr.message || `Server returned error (${res.status}).`);
+        }
         setJobStatus('error');
         setIsLoading(false);
       }

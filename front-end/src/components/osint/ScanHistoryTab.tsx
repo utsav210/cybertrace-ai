@@ -26,6 +26,16 @@ export const ScanHistoryTab: React.FC<ScanHistoryTabProps> = ({ onSelectHistoryI
   const [history, setHistory] = useState<ScanHistoryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const safeParseResponse = async (res: Response) => {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return await res.json();
+    }
+    const text = await res.text();
+    const cleanText = text.replace(/<[^>]*>?/gm, ' ').trim();
+    throw new Error(cleanText.substring(0, 120) || `Server status ${res.status}`);
+  };
+
   const fetchHistory = async () => {
     if (!token) return;
     setIsLoading(true);
@@ -34,7 +44,7 @@ export const ScanHistoryTab: React.FC<ScanHistoryTabProps> = ({ onSelectHistoryI
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = await safeParseResponse(res);
         setHistory(data.history || []);
       }
     } catch (err) {
@@ -60,8 +70,12 @@ export const ScanHistoryTab: React.FC<ScanHistoryTabProps> = ({ onSelectHistoryI
       if (res.ok) {
         fetchHistory();
       } else {
-        const errData = await res.json();
-        alert(`Purge failed: ${errData.error || 'Unauthorized'}`);
+        try {
+          const errData = await safeParseResponse(res);
+          alert(`Purge failed: ${errData.error || 'Unauthorized'}`);
+        } catch (parseErr: any) {
+          alert(`Purge failed: ${parseErr.message}`);
+        }
       }
     } catch (err) {
       console.error("Error purging record:", err);
