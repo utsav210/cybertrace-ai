@@ -1044,19 +1044,7 @@ def convert_complaint_to_case(complaint_id):
 @app.route('/api/settings', methods=['GET'])
 def get_settings():
     initialize_database()
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT value FROM system_settings WHERE key = 'config';")
-    row = cursor.fetchone()
-    conn.close()
-    
-    if row:
-        try:
-            return jsonify(json.loads(row["value"]))
-        except Exception:
-            pass
-            
-    return jsonify({
+    default_config = {
         "entityConfidence": 85,
         "autoTriage": True,
         "ocrSensitivity": "High",
@@ -1069,16 +1057,69 @@ def get_settings():
         },
         "sessionTimeout": 30,
         "twoFactor": True
-    })
+    }
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT value FROM system_settings WHERE key = 'config';")
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        try:
+            stored = json.loads(row["value"])
+            if isinstance(stored, dict):
+                merged = default_config.copy()
+                merged.update(stored)
+                if "connectors" in stored and isinstance(stored["connectors"], dict):
+                    connectors_merged = default_config["connectors"].copy()
+                    connectors_merged.update(stored["connectors"])
+                    merged["connectors"] = connectors_merged
+                return jsonify(merged)
+        except Exception:
+            pass
+            
+    return jsonify(default_config)
 
 @app.route('/api/settings', methods=['POST'])
 def save_settings():
     initialize_database()
     data = request.get_json() or {}
     
+    default_config = {
+        "entityConfidence": 85,
+        "autoTriage": True,
+        "ocrSensitivity": "High",
+        "defaultLanguage": "en",
+        "connectors": {
+            "i4c_1930": {"status": "Connected", "lastSync": "Today, 10:42 AM", "records": "1,420 Flagged Accounts"},
+            "ncrp_portal": {"status": "Connected", "lastSync": "Today, 11:15 AM", "records": "890 Active Tickets"},
+            "cctns_db": {"status": "Connected", "lastSync": "Yesterday, 04:30 PM", "records": "Linked to Crime Branch"},
+            "npci_upi": {"status": "Connected", "lastSync": "Real-time Webhook", "records": "NCPR Nodal Gateway"}
+        },
+        "sessionTimeout": 30,
+        "twoFactor": True
+    }
+    
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT OR REPLACE INTO system_settings (key, value) VALUES ('config', ?);", (json.dumps(data),))
+    cursor.execute("SELECT value FROM system_settings WHERE key = 'config';")
+    row = cursor.fetchone()
+    if row:
+        try:
+            stored = json.loads(row["value"])
+            if isinstance(stored, dict):
+                default_config.update(stored)
+                if "connectors" in stored and isinstance(stored["connectors"], dict):
+                    default_config["connectors"].update(stored["connectors"])
+        except Exception:
+            pass
+            
+    default_config.update(data)
+    if "connectors" in data and isinstance(data["connectors"], dict):
+        default_config["connectors"].update(data["connectors"])
+        
+    cursor.execute("INSERT OR REPLACE INTO system_settings (key, value) VALUES ('config', ?);", (json.dumps(default_config),))
     conn.commit()
     conn.close()
     

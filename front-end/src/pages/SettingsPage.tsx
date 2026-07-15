@@ -50,7 +50,14 @@ export const SettingsPage: React.FC = () => {
         const res = await fetch('http://127.0.0.1:8000/api/settings');
         if (res.ok) {
           const json = await res.json();
-          setConfig(json);
+          setConfig((prev) => ({
+            ...prev,
+            ...json,
+            connectors: {
+              ...prev.connectors,
+              ...(json?.connectors || {})
+            }
+          }));
         }
       } catch (err) {
         console.error('Failed to load system settings:', err);
@@ -88,9 +95,9 @@ export const SettingsPage: React.FC = () => {
       setConfig((prev) => ({
         ...prev,
         connectors: {
-          ...prev.connectors,
+          ...(prev?.connectors || {}),
           [key]: {
-            ...prev.connectors[key],
+            ...((prev?.connectors && prev.connectors[key]) || { status: 'Connected', lastSync: 'Today', records: 'Active' }),
             lastSync: 'Just now (Ping verified 14ms)',
             status: 'Connected'
           }
@@ -174,13 +181,13 @@ export const SettingsPage: React.FC = () => {
               <div>
                 <div className="flex justify-between text-xs font-semibold mb-2">
                   <span className="text-white/80">Entity Extraction Confidence Threshold</span>
-                  <span className="text-amber-400 font-mono font-bold">{config.entityConfidence}%</span>
+                  <span className="text-amber-400 font-mono font-bold">{config?.entityConfidence ?? 85}%</span>
                 </div>
                 <input
                   type="range"
                   min="60"
                   max="98"
-                  value={config.entityConfidence}
+                  value={config?.entityConfidence ?? 85}
                   onChange={(e) => setConfig({ ...config, entityConfidence: parseInt(e.target.value) })}
                   className="w-full accent-amber-400 bg-white/10 h-2 rounded-lg cursor-pointer"
                 />
@@ -197,7 +204,7 @@ export const SettingsPage: React.FC = () => {
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={config.autoTriage}
+                    checked={config?.autoTriage ?? true}
                     onChange={(e) => setConfig({ ...config, autoTriage: e.target.checked })}
                     className="sr-only peer"
                   />
@@ -214,7 +221,7 @@ export const SettingsPage: React.FC = () => {
                       key={lvl}
                       onClick={() => setConfig({ ...config, ocrSensitivity: lvl.split(' ')[0] })}
                       className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all ${
-                        config.ocrSensitivity === lvl.split(' ')[0]
+                        (config?.ocrSensitivity || 'High') === lvl.split(' ')[0]
                           ? 'bg-amber-400/15 border-amber-400/50 text-amber-300 shadow-sm'
                           : 'bg-white/[0.03] border-white/08 text-white/60 hover:bg-white/[0.06]'
                       }`}
@@ -257,7 +264,7 @@ export const SettingsPage: React.FC = () => {
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={config.twoFactor}
+                    checked={config?.twoFactor ?? true}
                     onChange={(e) => setConfig({ ...config, twoFactor: e.target.checked })}
                     className="sr-only peer"
                   />
@@ -268,14 +275,14 @@ export const SettingsPage: React.FC = () => {
               <div>
                 <div className="flex justify-between text-xs font-semibold mb-2">
                   <span className="text-white/80">Officer Inactive Session Timeout</span>
-                  <span className="text-blue-400 font-mono font-bold">{config.sessionTimeout} Minutes</span>
+                  <span className="text-blue-400 font-mono font-bold">{config?.sessionTimeout ?? 30} Minutes</span>
                 </div>
                 <input
                   type="range"
                   min="5"
                   max="120"
                   step="5"
-                  value={config.sessionTimeout}
+                  value={config?.sessionTimeout ?? 30}
                   onChange={(e) => setConfig({ ...config, sessionTimeout: parseInt(e.target.value) })}
                   className="w-full accent-blue-400 bg-white/10 h-2 rounded-lg cursor-pointer"
                 />
@@ -286,7 +293,7 @@ export const SettingsPage: React.FC = () => {
                   <Globe size={14} className="text-blue-400" /> Default System Interface Language
                 </label>
                 <select
-                  value={config.defaultLanguage}
+                  value={config?.defaultLanguage || 'en'}
                   onChange={(e) => {
                     setConfig({ ...config, defaultLanguage: e.target.value });
                     i18n.changeLanguage(e.target.value);
@@ -323,7 +330,7 @@ export const SettingsPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {connectorsList.map((c) => {
-              const statusInfo = config.connectors[c.key] || { status: 'Connected', lastSync: 'Today', records: 'Active' };
+              const statusInfo = (config?.connectors && config.connectors[c.key]) || { status: 'Connected', lastSync: 'Today', records: 'Active' };
               const isPinging = pingingConnector === c.key;
               return (
                 <div key={c.key} className="p-4 rounded-2xl bg-white/[0.03] border border-white/08 flex flex-col justify-between space-y-3 hover:border-white/15 transition-all">
