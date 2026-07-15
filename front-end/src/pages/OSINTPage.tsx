@@ -163,7 +163,7 @@ export const OSINTPage: React.FC = () => {
           const foundSites = socialSites.filter((_, i) => (h >> i) % 2 === 0);
           data = {
             username: q,
-            existsOn: foundSites.length > 0 ? foundSites : ['No public profiles found'],
+            existsOn: foundSites.length > 0 ? foundSites.map(site => `${site}: @${q}`) : ['No public profiles found'],
             riskProfile: foundSites.includes('Telegram') ? 'Elevated (Anonymous comms)' : 'Standard',
             sherlockScan: 'Completed across 300+ platforms'
           };
@@ -368,7 +368,11 @@ export const OSINTPage: React.FC = () => {
                         <div className={clsx("font-semibold break-words", theme === 'light' ? 'text-slate-900' : 'text-white')}>
                           {typeof value === 'boolean' 
                             ? (value ? <span className="text-emerald-600 dark:text-emerald-500 flex items-center gap-1"><CheckCircle2 size={16}/> True</span> : <span className="text-red-600 dark:text-red-500 flex items-center gap-1"><XCircle size={16}/> False</span>)
-                            : Array.isArray(value) ? value.join(', ') : String(value)}
+                            : Array.isArray(value) ? (
+                                <ul className="list-disc list-inside space-y-1">
+                                  {value.map((item, i) => <li key={i}>{String(item)}</li>)}
+                                </ul>
+                              ) : String(value)}
                         </div>
                       </div>
                     );
