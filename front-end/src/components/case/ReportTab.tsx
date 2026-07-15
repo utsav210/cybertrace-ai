@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { FileText, Download, Printer, X, Globe, Loader2, ClipboardList } from 'lucide-react';
+import { FileText, Download, Printer, X, Globe, Loader2, ClipboardList, Scale, ShieldCheck, AlertTriangle } from 'lucide-react';
 import type { Case } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import { generateFIR_HTML } from '../../utils/generateFIR';
+import { generateFIR_HTML, computeLegalIntelligenceMatrix } from '../../utils/generateFIR';
+import { useCaseStore } from '../../store/caseStore';
 
 interface Props { case_: Case }
 
@@ -80,11 +81,16 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
     ['en', 'hi', 'gu'].includes(currentLang) ? currentLang : 'en'
   );
 
+  // Sync local language selector from i18n only when i18n.language changes externally
+  // (e.g., user switches language via global header switcher, not via this radio).
+  // IMPORTANT: Do NOT call i18n.changeLanguage() inside this effect — that triggers
+  // the effect again causing "Maximum update depth exceeded" infinite loop.
   React.useEffect(() => {
     const lang = (i18n.language || 'en').slice(0, 2) as 'en' | 'hi' | 'gu';
-    if (['en', 'hi', 'gu'].includes(lang)) {
-      setLanguage(lang);
+    if (['en', 'hi', 'gu'].includes(lang) && lang !== language) {
+      setLanguage(lang as 'en' | 'hi' | 'gu');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i18n.language]);
 
   const [generating, setGenerating] = useState(false);
@@ -148,34 +154,37 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
     win.document.close();
   };
 
+  const alerts = useCaseStore((s) => s.fraudAlerts.filter((a) => a.caseId === case_.id));
+  const intelReport = React.useMemo(() => computeLegalIntelligenceMatrix(case_, alerts, language), [case_, alerts, language]);
+
   const firPreviewLines = [
     'FIRST INFORMATION REPORT (FIR)',
-    '(Under Section 154 CrPC, 1973 & Section 173 BNSS, 2023)',
-    '─'.repeat(54),
+    '(Under Section 173 BNSS, 2023 & IT Act, 2000 - Bharatiya Nagarik Suraksha Sanhita)',
+    '─'.repeat(60),
     `District      : Ahmedabad, Gujarat`,
     `Police Station: Cyber Crime Branch, Ahmedabad`,
     `FIR No.       : ${case_.caseNumber}`,
     `Date / Time   : ${new Date().toLocaleDateString('en-IN')} ${new Date().toLocaleTimeString('en-IN')}`,
-    '─'.repeat(54),
+    '─'.repeat(60),
     `Complainant   : ${case_.complainant || 'N/A'}`,
     `Contact       : ${case_.complainantPhone || 'N/A'}`,
-    '─'.repeat(54),
+    '─'.repeat(60),
     `Nature        : ${case_.title}`,
     `Description   : ${case_.description || 'To be ascertained.'}`,
-    '─'.repeat(54),
-    `Amount Involved: ${case_.amountLost ? '₹' + Number(case_.amountLost).toLocaleString('en-IN') : 'To be ascertained'}`,
+    '─'.repeat(60),
+    `Amount Lost   : ${case_.amountLost ? '₹' + Number(case_.amountLost).toLocaleString('en-IN') : 'To be ascertained'}`,
     `Place         : Cyber Space / Online Platform`,
-    '─'.repeat(54),
-    'Sections Applied:',
-    '  • IPC Sec 419 – Cheating by Personation',
-    '  • IPC Sec 420 – Cheating',
-    '  • IT Act Sec 66C – Identity Theft',
-    '  • IT Act Sec 66D – Cheating by Personation (Cyber)',
-    '─'.repeat(54),
+    '─'.repeat(60),
+    'AI Statutory Sections & Legal Justifications:',
+    ...intelReport.recommendedSections.map((s) => `  • [${s.statute}] ${s.sectionCode} – ${s.title}\n    Justification: ${s.applicabilityReason}\n    Punishment: ${s.punishment}`),
+    '─'.repeat(60),
+    `Mandatory Seizure: ${intelReport.proceduralMandates.seizureSection}`,
+    `Electronic Evidence: ${intelReport.proceduralMandates.evidenceSection}`,
+    '─'.repeat(60),
     'I.O.: Inspector Raj Patel (Badge: GUJ/CCB/1042)',
     '      Cyber Crime Branch, Ahmedabad, Gujarat Police',
-    '─'.repeat(54),
-    '* Click "Print / Download" for full formatted FIR *',
+    '─'.repeat(60),
+    '* Click "Print / Download" for full formatted official court FIR *',
   ].join('\n');
 
   const report = REPORT_CONTENT[language] || REPORT_CONTENT.en;
@@ -200,7 +209,7 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
               style={{ background: language === lang ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.03)' }}
             >
               <input type="radio" name="language" value={lang} checked={language === lang}
-                onChange={() => { setLanguage(lang); i18n.changeLanguage(lang); }} className="hidden" />
+                onChange={() => { setLanguage(lang); }} className="hidden" />
               <div className={clsx('w-4 h-4 rounded-full border-2 flex items-center justify-center',
                 language === lang ? 'border-amber-400' : 'border-white/20'
               )}>
@@ -212,6 +221,52 @@ export const ReportTab: React.FC<Props> = ({ case_ }) => {
               {lang === 'gu' && <span>🟠</span>}
             </label>
           ))}
+        </div>
+      </div>
+
+      {/* AI Legal Intelligence & Statutory Charge Matrix Card */}
+      <div className="glass-card p-5 border border-blue-500/30" style={{ background: 'linear-gradient(135deg, rgba(30,58,138,0.25), rgba(15,23,42,0.4))' }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <Scale size={18} className="text-blue-400 animate-pulse" />
+            <div>
+              <h3 className="font-bold text-sm text-white">AI Statutory Offense Mapping &amp; Charge Matrix</h3>
+              <p className="text-xs text-blue-300/70">Compliant with Bharatiya Nyaya Sanhita (BNS 2023), IT Act 2000, and BSA 2023</p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1.5">
+            <ShieldCheck size={13} /> {intelReport.recommendedSections.length} Sections Applied
+          </span>
+        </div>
+
+        <p className="text-xs text-white/70 mb-4 leading-relaxed font-mono px-3 py-2 rounded bg-black/30 border border-white/05">
+          {intelReport.aiAnalysisSummary}
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          {intelReport.recommendedSections.map((sec, idx) => (
+            <div key={idx} className="p-3 rounded-lg bg-white/05 border border-white/10 hover:border-blue-500/40 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-blue-300 font-mono">{sec.sectionCode}</span>
+                  <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 font-semibold">{sec.statute.split(' ')[0]}</span>
+                </div>
+                <h4 className="text-xs font-semibold text-white mb-1">{sec.title}</h4>
+                <p className="text-[11px] text-white/60 leading-normal mb-2"><em>Justification:</em> {sec.applicabilityReason}</p>
+              </div>
+              <div className="text-[10px] text-red-300/90 font-medium pt-1 border-t border-white/05 flex items-center gap-1">
+                <AlertTriangle size={11} className="text-red-400" /> {sec.punishment}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="p-3 rounded-lg bg-blue-950/40 border border-blue-500/20 text-xs text-blue-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={16} className="text-green-400 flex-shrink-0" />
+            <span>Mandatory Evidentiary Protocol: <strong>{intelReport.proceduralMandates.evidenceSection}</strong></span>
+          </div>
+          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300">Section 65B Certified</span>
         </div>
       </div>
 

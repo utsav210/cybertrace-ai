@@ -41,6 +41,7 @@ interface CaseState {
   importTransactions: (caseId: string, file?: File) => Promise<void>;
   
   // Fraud alert actions
+  addFraudAlert: (alert: FraudAlert) => void;
   acceptFraudAlert: (id: string) => Promise<void>;
   rejectFraudAlert: (id: string) => Promise<void>;
 }
@@ -304,43 +305,46 @@ export const useCaseStore = create<CaseState>((set, get) => ({
     }
   },
 
-  acceptFraudAlert: async (id) => {
+  addFraudAlert: (alert) => {
+    set((s) => ({ fraudAlerts: [alert, ...s.fraudAlerts] }));
     try {
-      const res = await fetch(`/api/alerts/${id}/status`, {
+      fetch(`/api/cases/${alert.caseId}/alerts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'accepted' })
+        body: JSON.stringify(alert),
+      }).catch(() => {});
+    } catch (e) {}
+  },
+
+  acceptFraudAlert: async (id) => {
+    set((s) => ({
+      fraudAlerts: s.fraudAlerts.map((a) => (a.id === id ? { ...a, status: 'accepted' } : a)),
+    }));
+    try {
+      const targetAlert = get().fraudAlerts.find((a) => a.id === id);
+      await fetch(`/api/alerts/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'accepted', alert: targetAlert }),
       });
-      if (res.ok) {
-        set((s) => ({
-          fraudAlerts: s.fraudAlerts.map((a) => (a.id === id ? { ...a, status: 'accepted' } : a)),
-        }));
-      }
     } catch (e) {
-      // Offline fallback
-      set((s) => ({
-        fraudAlerts: s.fraudAlerts.map((a) => (a.id === id ? { ...a, status: 'accepted' } : a)),
-      }));
+      // Offline fallback already handled by state update above
     }
   },
 
   rejectFraudAlert: async (id) => {
+    set((s) => ({
+      fraudAlerts: s.fraudAlerts.map((a) => (a.id === id ? { ...a, status: 'rejected' } : a)),
+    }));
     try {
-      const res = await fetch(`/api/alerts/${id}/status`, {
+      const targetAlert = get().fraudAlerts.find((a) => a.id === id);
+      await fetch(`/api/alerts/${id}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'rejected' })
+        body: JSON.stringify({ status: 'rejected', alert: targetAlert }),
       });
-      if (res.ok) {
-        set((s) => ({
-          fraudAlerts: s.fraudAlerts.map((a) => (a.id === id ? { ...a, status: 'rejected' } : a)),
-        }));
-      }
     } catch (e) {
-      // Offline fallback
-      set((s) => ({
-        fraudAlerts: s.fraudAlerts.map((a) => (a.id === id ? { ...a, status: 'rejected' } : a)),
-      }));
+      // Offline fallback already handled by state update above
     }
   },
 }));

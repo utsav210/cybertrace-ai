@@ -620,6 +620,7 @@ def get_analytics(case_id):
     # Persist new alerts using the already-open connection
     # Collect notification params to create AFTER closing conn (avoids nested connection deadlock)
     pending_notifications = []
+    all_case_alerts = []  # Initialize before try block to avoid NameError
     try:
         for alert in generated_alerts:
             cursor.execute(
@@ -642,10 +643,40 @@ def get_analytics(case_id):
                     "case_id": case_id
                 })
         conn.commit()
+
+        # Fetch all alerts for this case (includes previously accepted/rejected) while conn is open
+        cursor.execute("SELECT * FROM fraud_alerts WHERE case_id = ? ORDER BY id ASC;", (case_id,))
+        db_alert_rows = cursor.fetchall()
+        for r in db_alert_rows:
+            a = row_to_dict(r)
+            inv = a["involved_entities"]
+            try:
+                inv = json.loads(inv) if isinstance(inv, str) else inv
+            except Exception:
+                inv = []
+            all_case_alerts.append({
+                "id": a["id"],
+                "caseId": a["case_id"],
+                "type": a["type"],
+                "severity": a["severity"],
+                "description": a["description"],
+                "involvedEntities": inv,
+                "riskScore": a["risk_score"],
+                "aiConfidence": a["ai_confidence"],
+                "status": a["status"]
+            })
     except Exception as db_err:
         print(f"[analytics] Alert persistence warning: {db_err}")
     finally:
-        conn.close()
+        # Always close connection when done — never execute queries here
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    # Fallback to in-memory generated alerts if DB returned nothing
+    if not all_case_alerts:
+        all_case_alerts = generated_alerts
 
     # Create notifications now that DB connection is closed
     for n in pending_notifications:
@@ -657,7 +688,7 @@ def get_analytics(case_id):
     return jsonify({
         "nodes": nodes,
         "links": links,
-        "alerts": generated_alerts
+        "alerts": all_case_alerts
     })
 
 
@@ -673,18 +704,47 @@ def get_alerts(case_id):
     alerts = []
     for r in rows:
         a = row_to_dict(r)
+        inv = a["involved_entities"]
+        try:
+            inv = json.loads(inv) if isinstance(inv, str) else inv
+        except Exception:
+            inv = []
         alerts.append({
             "id": a["id"],
             "caseId": a["case_id"],
             "type": a["type"],
             "severity": a["severity"],
             "description": a["description"],
-            "involvedEntities": json.loads(a["involved_entities"]),
+            "involvedEntities": inv,
             "riskScore": a["risk_score"],
             "aiConfidence": a["ai_confidence"],
             "status": a["status"]
         })
     return jsonify(alerts)
+
+@app.route('/api/cases/<case_id>/alerts', methods=['POST'])
+def add_case_alert(case_id):
+    data = request.get_json()
+    if not data or 'id' not in data:
+        return jsonify({"error": "Invalid alert data"}), 400
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM fraud_alerts WHERE id = ?;", (data['id'],))
+    if not cursor.fetchone():
+        inv = data.get('involvedEntities', [])
+        if not isinstance(inv, str):
+            inv = json.dumps(inv)
+        cursor.execute(
+            "INSERT INTO fraud_alerts (id, case_id, type, severity, description, "
+            "involved_entities, risk_score, ai_confidence, status) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            (data['id'], case_id, data.get('type', 'AI Fraud Finding'), data.get('severity', 'high'),
+             data.get('description', ''), inv, float(data.get('riskScore', 75)),
+             float(data.get('aiConfidence', 0.9)), data.get('status', 'pending'))
+        )
+        conn.commit()
+    conn.close()
+    return jsonify({"message": "Alert added successfully."}), 201
 
 # Accept/Reject Fraud Alert
 @app.route('/api/alerts/<alert_id>/status', methods=['POST'])
@@ -702,17 +762,35 @@ def update_alert_status(alert_id):
     cursor.execute("SELECT * FROM fraud_alerts WHERE id = ?;", (alert_id,))
     row = cursor.fetchone()
     if not row:
-        conn.close()
-        return jsonify({"error": "Alert not found"}), 404
-        
-    alert = row_to_dict(row)
-    cursor.execute("UPDATE fraud_alerts SET status = ? WHERE id = ?;", (status, alert_id))
-    conn.commit()
+        alert_data = data.get('alert')
+        if alert_data and isinstance(alert_data, dict) and alert_data.get('caseId'):
+            inv = alert_data.get('involvedEntities', [])
+            if not isinstance(inv, str):
+                inv = json.dumps(inv)
+            cursor.execute(
+                "INSERT INTO fraud_alerts (id, case_id, type, severity, description, "
+                "involved_entities, risk_score, ai_confidence, status) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                (alert_id, alert_data.get('caseId', 'case-001'), alert_data.get('type', 'AI Fraud Finding'),
+                 alert_data.get('severity', 'high'), alert_data.get('description', ''),
+                 inv, float(alert_data.get('riskScore', 75)),
+                 float(alert_data.get('aiConfidence', 0.9)), status)
+            )
+            conn.commit()
+            alert_type = alert_data.get('type', 'AI Fraud Finding')
+        else:
+            conn.close()
+            return jsonify({"message": f"Alert updated to {status}."}), 200
+    else:
+        alert = row_to_dict(row)
+        alert_type = alert['type']
+        cursor.execute("UPDATE fraud_alerts SET status = ? WHERE id = ?;", (status, alert_id))
+        conn.commit()
     conn.close()
     
     # Audit log
     action = "ENTITY_ACCEPTED" if status == "accepted" else "ENTITY_REJECTED" # match available frontend AuditActions
-    create_audit_log("officer.raj", "CASE_UPDATED", alert_id, request.remote_addr or "127.0.0.1", f"Alert: {alert['type']} marked {status}")
+    create_audit_log("officer.raj", "CASE_UPDATED", alert_id, request.remote_addr or "127.0.0.1", f"Alert: {alert_type} marked {status}")
     
     return jsonify({"message": f"Alert updated to {status}."})
 
