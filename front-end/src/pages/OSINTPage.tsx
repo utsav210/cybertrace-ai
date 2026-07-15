@@ -33,97 +33,132 @@ export const OSINTPage: React.FC = () => {
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) {
+    const q = query.trim();
+    if (!q) {
       setResult({ status: 'error', data: null, error: 'Please enter a valid target query.' });
       return;
     }
     
     setResult({ status: 'scanning', data: null });
     
-    // Defensive programming: simulate network delay with robust try-catch
+    // Deterministic hash to generate consistent "random" mock data for a specific query
+    const hashStr = (str: string) => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash);
+    };
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      let mockData: any = null;
+      let data: any = null;
+      const h = hashStr(q.toLowerCase());
       
       switch (activeTab) {
         case 'phone':
-          if (query.length < 10) throw new Error('Invalid phone number format.');
-          mockData = {
-            provider: 'Jio / Reliance',
-            circle: 'Gujarat, India',
-            spamScore: 'Low (12%)',
-            truecallerName: 'Vikram Desai',
-            whatsappActive: true,
-            telegramActive: false,
-            location: 'Ahmedabad (Lat: 23.0225, Lng: 72.5714) - Tracked via MSISDN HLR Lookup'
+          if (q.length < 10) throw new Error('Invalid phone number format.');
+          await new Promise(r => setTimeout(r, 1500)); // Simulate API delay
+          const providers = ['Jio / Reliance', 'Bharti Airtel', 'Vodafone Idea', 'BSNL'];
+          const circles = ['Gujarat, India', 'Maharashtra, India', 'Delhi, India', 'Karnataka, India'];
+          const names = ['Vikram Desai', 'Rahul Sharma', 'Amit Patel', 'Sneha Reddy', 'Unknown Target'];
+          
+          data = {
+            provider: providers[h % providers.length],
+            circle: circles[(h >> 2) % circles.length],
+            spamScore: h % 100 > 70 ? 'High (' + (h % 100) + '%)' : 'Low (' + (h % 100) + '%)',
+            truecallerName: names[h % names.length],
+            whatsappActive: h % 2 === 0,
+            telegramActive: h % 3 === 0,
+            location: 'Tracked via MSISDN HLR Lookup to base cell ID'
           };
           break;
+          
         case 'email':
-          if (!query.includes('@')) throw new Error('Invalid email format.');
-          mockData = {
-            deliverable: true,
-            googleAccount: true,
-            linkedProfiles: ['Skype', 'Twitter', 'GitHub'],
-            breaches: [
+          if (!q.includes('@')) throw new Error('Invalid email format.');
+          await new Promise(r => setTimeout(r, 1500));
+          const allProfiles = ['Skype', 'Twitter', 'GitHub', 'LinkedIn', 'Instagram', 'Pinterest'];
+          const pCount = h % 4;
+          const profiles = [];
+          for (let i=0; i<pCount; i++) profiles.push(allProfiles[(h + i) % allProfiles.length]);
+          
+          const breached = h % 100 > 30; // 70% chance of breach for demo
+          data = {
+            deliverable: h % 10 !== 0, // 90% chance deliverable
+            googleAccount: q.endsWith('@gmail.com') || h % 2 === 0,
+            linkedProfiles: profiles.length > 0 ? profiles : ['None detected'],
+            breaches: breached ? [
               { name: 'LinkedIn (2012)', date: '2012-05-05', data: ['Email', 'Passwords'] },
-              { name: 'Canva (2019)', date: '2019-05-24', data: ['Email', 'Geographic locations', 'Names', 'Passwords'] }
-            ]
+              (h % 2 === 0 ? { name: 'Canva (2019)', date: '2019-05-24', data: ['Email', 'Geographic locations', 'Names', 'Passwords'] } : null)
+            ].filter(Boolean) : []
           };
           break;
+          
         case 'upi':
-          if (!query.includes('@')) throw new Error('Invalid UPI ID format.');
-          mockData = {
-            vpa: query,
-            status: 'ACTIVE',
-            registeredName: 'VIKRAM D',
-            bankName: 'HDFC Bank Ltd',
-            merchantType: 'Individual / P2P',
+          if (!q.includes('@')) throw new Error('Invalid UPI ID format.');
+          await new Promise(r => setTimeout(r, 1500));
+          const banks = ['HDFC Bank Ltd', 'State Bank of India', 'ICICI Bank', 'Axis Bank', 'Paytm Payments Bank'];
+          data = {
+            vpa: q,
+            status: h % 10 === 0 ? 'INACTIVE' : 'ACTIVE',
+            registeredName: 'User_' + q.split('@')[0].toUpperCase().substring(0, 5) + '***',
+            bankName: banks[h % banks.length],
+            merchantType: h % 5 === 0 ? 'Merchant / Business' : 'Individual / P2P',
           };
           break;
+          
         case 'bank':
-          if (query.length !== 11) throw new Error('Invalid IFSC format. Must be 11 characters.');
-          // Simulated live API response structure (like Razorpay IFSC API)
-          mockData = {
-            bank: 'STATE BANK OF INDIA',
-            ifsc: query.toUpperCase(),
-            branch: 'CG ROAD, AHMEDABAD',
-            address: 'SWAGAT BUILDING, CG ROAD, NAVRANGPURA, AHMEDABAD 380009',
-            city: 'AHMEDABAD',
-            state: 'GUJARAT',
-            rtgs: true,
-            neft: true,
-            imps: true,
+          if (q.length !== 11) throw new Error('Invalid IFSC format. Must be exactly 11 characters (e.g., HDFC0000001).');
+          // Live API call to Razorpay IFSC API
+          const bankRes = await fetch(`https://ifsc.razorpay.com/${q.toUpperCase()}`);
+          if (!bankRes.ok) throw new Error('Failed to retrieve branch details. IFSC may be invalid.');
+          const bankData = await bankRes.json();
+          data = {
+            bank: bankData.BANK,
+            ifsc: bankData.IFSC,
+            branch: bankData.BRANCH,
+            address: bankData.ADDRESS,
+            city: bankData.CITY,
+            state: bankData.STATE,
+            rtgs: bankData.RTGS,
+            neft: bankData.NEFT,
+            imps: bankData.IMPS,
           };
           break;
+          
         case 'password':
-          if (query.length < 4) throw new Error('Password too short for analysis.');
-          // Simulating HIBP K-Anonymity check
-          const pwnedCount = Math.floor(Math.random() * 5000);
-          mockData = {
+          if (q.length < 4) throw new Error('Password too short for analysis.');
+          await new Promise(r => setTimeout(r, 1200));
+          const pwnedCount = h % 10000;
+          data = {
             pwned: pwnedCount > 0,
             occurrences: pwnedCount,
             message: pwnedCount > 0 ? `This password has been seen ${pwnedCount} times in data breaches.` : 'Good news — no pwnage found!',
-            breachDBs: pwnedCount > 0 ? ['Collection #1', 'RockYou2021', 'Cit0day'] : [],
+            breachDBs: pwnedCount > 0 ? ['Collection #1', 'RockYou2021', 'Cit0day'].slice(0, 1 + (h % 3)) : [],
             locationTrack: pwnedCount > 0 ? 'Threat Actor IPs tracked to Eastern Europe / RU (Simulated)' : 'N/A'
           };
           break;
+          
         case 'ip':
-          if (!query.includes('.')) throw new Error('Invalid IP address format.');
-          mockData = {
-            ip: query,
-            isp: 'Bharti Airtel Ltd.',
-            asn: 'AS24560',
-            location: 'Mumbai, Maharashtra, India',
-            coordinates: '19.0760° N, 72.8777° E',
-            timezone: 'Asia/Kolkata (IST)',
-            proxyOrVPN: false,
-            threatScore: 'Low (0/100)'
+          if (!q.includes('.')) throw new Error('Invalid IP address format.');
+          // Live API call to ip-api
+          const ipRes = await fetch(`http://ip-api.com/json/${q}`);
+          const ipData = await ipRes.json();
+          if (ipData.status !== 'success') throw new Error('Failed to resolve IP address location.');
+          data = {
+            ip: ipData.query,
+            isp: ipData.isp,
+            asn: ipData.as,
+            location: `${ipData.city}, ${ipData.regionName}, ${ipData.country}`,
+            coordinates: `${ipData.lat}° N, ${ipData.lon}° E`,
+            timezone: ipData.timezone,
+            proxyOrVPN: h % 10 === 0, // Mocked detection
+            threatScore: h % 100 > 80 ? 'High (' + (h % 100) + '/100)' : 'Low (' + (h % 100) + '/100)'
           };
           break;
       }
       
-      setResult({ status: 'success', data: mockData });
+      setResult({ status: 'success', data });
     } catch (err: any) {
       setResult({ status: 'error', data: null, error: err.message || 'Failed to gather intelligence. Target may be shielded or input is invalid.' });
     }
