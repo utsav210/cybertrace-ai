@@ -164,6 +164,16 @@
     "firTitle": "First Information Report",
     "firDownload": "Download FIR"
   },
+  "osint": {
+    "title": "OSINT Gathering Portal",
+    "subtitle": "Open Source Intelligence aggregation for digital footprint analysis.",
+    "phone": "Phone OSINT",
+    "email": "Email OSINT",
+    "upi": "UPI ID OSINT",
+    "bank": "Bank / IFSC",
+    "password": "Password Breach",
+    "ip": "IP / Location"
+  },
   "audit": {
     "title": "Audit Log",
     "timestamp": "Timestamp",

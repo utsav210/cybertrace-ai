@@ -164,6 +164,16 @@
     "firTitle": "પ્રથમ માહિતી અહેવાલ",
     "firDownload": "FIR ડાઉનલૉડ"
   },
+  "osint": {
+    "title": "OSINT (ઓપન સોર્સ ઇન્ટેલિજન્સ) પોર્ટલ",
+    "subtitle": "ડિજિટલ ફૂટપ્રિન્ટ વિશ્લેષણ માટે ઓપન સોર્સ ઇન્ટેલિજન્સનું એકત્રીકરણ.",
+    "phone": "ફોન OSINT",
+    "email": "ઇમેઇલ OSINT",
+    "upi": "UPI આઈડી OSINT",
+    "bank": "બેંક / IFSC",
+    "password": "પાસવર્ડ ભંગ (Breach)",
+    "ip": "IP / સ્થાન (Location)"
+  },
   "audit": {
     "title": "ઓડિટ લૉગ",
     "timestamp": "સમય",

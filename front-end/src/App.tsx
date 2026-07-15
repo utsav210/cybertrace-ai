@@ -9,6 +9,7 @@ import { AuditLogPage } from './pages/AuditLogPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { CitizenPortalPage } from './pages/CitizenPortalPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { OSINTPage } from './pages/OSINTPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuthStore } from './store/authStore';
 import './i18n';
@@ -50,6 +51,11 @@ function App() {
           <Route path="analytics" element={
             <ProtectedRoute allowedRoles={['officer', 'supervisor', 'admin']}>
               <AnalyticsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="osint" element={
+            <ProtectedRoute allowedRoles={['officer', 'supervisor', 'admin']}>
+              <OSINTPage />
             </ProtectedRoute>
           } />
           <Route path="portal" element={
