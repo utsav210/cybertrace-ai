@@ -109,7 +109,7 @@ export const OsintSuitePage: React.FC = () => {
   const graphRef = useRef<any>(null);
 
   // API base URL resolution
-  const API_BASE = (window as any)._env_?.VITE_API_URL || 'http://localhost:5000';
+  const API_BASE = (window as any)._env_?.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
   // 3-second useEffect polling mechanism for Tab A (Username Profiling)
   useEffect(() => {

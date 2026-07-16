@@ -4,6 +4,8 @@ import time
 import json
 import logging
 import threading
+import socket
+from urllib.parse import urlparse
 from typing import Dict, Any
 from flask import Blueprint, request, jsonify
 from .celery_worker import CELERY_AVAILABLE, celery_app, execute_osint_sync
@@ -13,6 +15,21 @@ osint_bp = Blueprint("osint", __name__)
 
 # In-memory store for threaded fallback tasks when Celery/Redis is offline locally
 THREADED_TASKS_STORE: Dict[str, Dict[str, Any]] = {}
+
+
+def _is_redis_broker_reachable() -> bool:
+    """Fast non-blocking socket probe (0.15s timeout) to verify Redis Celery broker availability."""
+    if not CELERY_AVAILABLE or not celery_app:
+        return False
+    try:
+        broker_url = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+        parsed = urlparse(broker_url)
+        host = parsed.hostname or "127.0.0.1"
+        port = parsed.port or 6379
+        with socket.create_connection((host, port), timeout=0.15):
+            return True
+    except Exception:
+        return False
 
 
 def _run_threaded_task(task_id: str, target: str, scan_type: str):
@@ -56,9 +73,9 @@ def start_osint_investigation():
     task_id = f"osint-{uuid.uuid4().hex[:12]}"
     logger.info(f"Initiating OSINT investigation for target='{target}' type='{scan_type}' (ID: {task_id})")
 
-    # Try dispatching via Celery if broker is connected
+    # Try dispatching via Celery if broker is connected and reachable
     celery_dispatched = False
-    if CELERY_AVAILABLE and celery_app:
+    if _is_redis_broker_reachable():
         try:
             # Check if redis ping succeeds or attempt direct send_task
             async_res = celery_app.send_task("app.celery_worker.run_osint_task", args=[target, scan_type], task_id=task_id)
@@ -116,8 +133,8 @@ def get_osint_results(task_id: str):
                 "target": info.get("target", "")
             }), 200
 
-    # Next check Celery backend if available
-    if CELERY_AVAILABLE and celery_app:
+    # Next check Celery backend if available and reachable
+    if _is_redis_broker_reachable():
         try:
             from celery.result import AsyncResult
             res = AsyncResult(task_id, app=celery_app)
