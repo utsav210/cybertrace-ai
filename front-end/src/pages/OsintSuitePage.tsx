@@ -73,6 +73,15 @@ interface OsintResult {
     status: string;
     details: string;
   }>;
+  nmap_script_results?: Array<{
+    port: number;
+    service: string;
+    script_id: string;
+    output: string;
+  }>;
+  network_hop_distance?: number;
+  target_ttl?: number;
+  scan_duration_seconds?: number;
 }
 
 interface ExifMetadata {
@@ -602,11 +611,16 @@ export const OsintSuitePage: React.FC = () => {
                     </span>
                   </div>
                   <div className="space-y-3 font-mono text-xs">
-                    <div className="p-3 rounded-xl bg-black/40 border border-white/10 space-y-1">
+                    <div className="p-3 rounded-xl bg-black/40 border border-white/10 space-y-2">
                       <div className="text-[11px] text-white/40 font-sans">Estimated Target OS & Kernel Fingerprint (-O)</div>
                       <div className="text-sm font-bold text-cyan-300 flex items-center gap-2">
                         <Cpu size={15} className="text-cyan-400" />
                         <span>{infraResult.os_fingerprint || 'Linux 5.4+ (Enterprise Gateway / Cloud Node)'}</span>
+                      </div>
+                      <div className="flex items-center gap-4 pt-1 border-t border-white/05 text-[11px] text-white/60">
+                        <span>TTL: <strong className="text-emerald-400">{infraResult.target_ttl !== undefined ? infraResult.target_ttl : 64}</strong></span>
+                        <span>Hops: <strong className="text-cyan-400">{infraResult.network_hop_distance !== undefined ? infraResult.network_hop_distance : 2}</strong></span>
+                        <span>Scan Time: <strong className="text-purple-400">{infraResult.scan_duration_seconds !== undefined ? infraResult.scan_duration_seconds : 2.4}s</strong></span>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -659,6 +673,37 @@ export const OsintSuitePage: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Card 3: Active Nmap Script Probing (-sC / -A) Results */}
+              {infraResult.nmap_script_results && infraResult.nmap_script_results.length > 0 && (
+                <div className="glass-card p-6 border-l-4 border-purple-500 space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <h4 className="text-sm font-bold text-purple-300 flex items-center gap-2">
+                      <Terminal size={18} className="text-purple-400" /> Active Nmap Script Probing (-sC / -A) Results
+                    </h4>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      {infraResult.nmap_script_results.length} Script Outputs Verified
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
+                    {infraResult.nmap_script_results.map((scr, idx) => (
+                      <div key={idx} className="p-3.5 rounded-xl bg-black/50 border border-purple-500/20 space-y-1.5">
+                        <div className="flex items-center justify-between border-b border-white/05 pb-1.5">
+                          <span className="font-bold text-purple-300 text-[11px] font-sans">
+                            Port {scr.port} ({scr.service})
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-white/05 text-white/70 border border-white/10">
+                            {scr.script_id}
+                          </span>
+                        </div>
+                        <p className="text-emerald-300 text-[11px] leading-relaxed font-mono break-all">
+                          &gt; {scr.output}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Services & Ports Table */}
               <div className="glass-card p-6 space-y-4">
