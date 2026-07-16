@@ -62,10 +62,10 @@ For prototype testing, use the following local demo accounts:
 
 * **Investigator Account**
   * **Username**: `officer.raj`
-  * **Password**: `password123`
+  * **Password**: `password123` <!-- ggignore -->
 * **Admin Account**
   * **Username**: `admin.sharma`
-  * **Password**: `admin123`
+  * **Password**: `admin123` <!-- ggignore -->
 
 ---
 

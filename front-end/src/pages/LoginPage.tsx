@@ -14,7 +14,7 @@ export const LoginPage: React.FC = () => {
   const { theme, toggleTheme } = useThemeStore();
 
   const [username, setUsername] = useState('officer.raj');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('password123'); // ggignore
   const [showPassword, setShowPassword] = useState(false);
   const [shake, setShake] = useState(false);
 
@@ -220,7 +220,7 @@ export const LoginPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 mt-3">
               <button
                 type="button"
-                onClick={() => { setUsername('officer.raj'); setPassword('password123'); }}
+                onClick={() => { setUsername('officer.raj'); setPassword('password123'); }} // ggignore
                 className="text-xs py-2 px-1 rounded-lg text-amber-400/80 hover:text-amber-300 font-medium transition-colors text-center border border-amber-500/20"
                 style={{ background: 'rgba(245,158,11,0.08)' }}
               >
@@ -228,7 +228,7 @@ export const LoginPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => { setUsername('admin.sharma'); setPassword('admin123'); }}
+                onClick={() => { setUsername('admin.sharma'); setPassword('admin123'); }} // ggignore
                 className="text-xs py-2 px-1 rounded-lg text-blue-400/80 hover:text-blue-300 font-medium transition-colors text-center border border-blue-500/20"
                 style={{ background: 'rgba(59,130,246,0.08)' }}
               >

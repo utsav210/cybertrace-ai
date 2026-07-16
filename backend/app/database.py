@@ -280,11 +280,11 @@ def initialize_database():
     if cursor.fetchone()[0] == 0:
         print("Seeding database with initial hackathon mockup data...")
 
-        # Users
+        # Users (Demo preset credentials with environment overrides and GitGuardian allowlist)
         users_data = [
-            ("u1", "officer.raj", "Raj Patel", "GUJ/CCB/1042", "officer", hash_password("password123")),
-            ("u2", "admin.sharma", "Priya Sharma", "GUJ/CCB/0001", "admin", hash_password("admin123")),
-            ("u3", "supervisor.mehta", "Kiran Mehta", "GUJ/CCB/0021", "supervisor", hash_password("super123"))
+            ("u1", "officer.raj", "Raj Patel", "GUJ/CCB/1042", "officer", hash_password(os.getenv("DEMO_OFFICER_PWD", "password123"))),  # ggignore
+            ("u2", "admin.sharma", "Priya Sharma", "GUJ/CCB/0001", "admin", hash_password(os.getenv("DEMO_ADMIN_PWD", "admin123"))),  # ggignore
+            ("u3", "supervisor.mehta", "Kiran Mehta", "GUJ/CCB/0021", "supervisor", hash_password(os.getenv("DEMO_SUPERVISOR_PWD", "super123")))  # ggignore
         ]
         cursor.executemany("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?);", users_data)
 

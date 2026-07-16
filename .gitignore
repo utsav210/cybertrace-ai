@@ -70,12 +70,14 @@ out/
 .DS_Store
 Thumbs.db
 
-# env files
+# env and secret files
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+*.key
+*.pem
+*.secret*
+id_rsa*
+*.local
 
 # Python virtual environment
 backend/venv/

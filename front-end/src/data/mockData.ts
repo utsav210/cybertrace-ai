@@ -3,7 +3,7 @@ import type { Case, Evidence, Entity, Transaction, GraphNode, GraphLink, FraudAl
 // ─── Users ────────────────────────────────────────────────────────────────────
 export const USERS: Record<string, { user: User; password: string }> = {
   'officer.raj': {
-    password: 'password123',
+    password: 'password123', // ggignore
     user: {
       id: 'u1',
       username: 'officer.raj',
@@ -13,7 +13,7 @@ export const USERS: Record<string, { user: User; password: string }> = {
     },
   },
   'admin.sharma': {
-    password: 'admin123',
+    password: 'admin123', // ggignore
     user: {
       id: 'u2',
       username: 'admin.sharma',
@@ -23,7 +23,7 @@ export const USERS: Record<string, { user: User; password: string }> = {
     },
   },
   'supervisor.mehta': {
-    password: 'super123',
+    password: 'super123', // ggignore
     user: {
       id: 'u3',
       username: 'supervisor.mehta',
@@ -33,7 +33,7 @@ export const USERS: Record<string, { user: User; password: string }> = {
     },
   },
   'citizen.desai': {
-    password: 'citizen123',
+    password: 'citizen123', // ggignore
     user: {
       id: 'u4',
       username: 'citizen.desai',
