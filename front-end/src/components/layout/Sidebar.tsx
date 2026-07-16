@@ -30,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
         { icon: LayoutDashboard, label: t('nav.dashboard'), to: '/dashboard' },
         { icon: FolderOpen, label: t('nav.cases'), to: '/cases' },
         { icon: ShieldAlert, label: t('nav.analytics', 'Threat Intel'), to: '/analytics' },
+        { icon: Globe, label: t('nav.osint', 'OSINT Investigation'), to: '/osint' },
         { icon: Users, label: t('nav.portal', 'Citizen Portal'), to: '/portal' },
         ...(user?.role === 'admin' ? [{ icon: ScrollText, label: t('nav.audit'), to: '/admin/audit' }] : []),
         { icon: Settings, label: t('nav.settings'), to: '/settings' },

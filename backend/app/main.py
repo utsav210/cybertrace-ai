@@ -20,6 +20,13 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Limit file size to 16MB defensively
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
+# Register OSINT Investigation Suite Blueprint
+try:
+    from .osint import osint_bp
+    app.register_blueprint(osint_bp, url_prefix='/api/osint')
+except Exception as _osint_err:
+    print(f"[OSINT Blueprint Error] Could not register OSINT blueprint: {_osint_err}")
+
 # Set up manual CORS headers defensively
 @app.after_request
 def after_request(response):
