@@ -9,6 +9,7 @@ import { useThemeStore } from '../store/themeStore';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { CreateCaseModal } from '../components/case/CreateCaseModal';
 
 const STATUS_BADGE: Record<string, string> = {
   open: 'badge-open',
@@ -21,6 +22,7 @@ export const CasesListPage: React.FC = () => {
   const { cases, initializeCases } = useCaseStore();
   const { theme } = useThemeStore();
   const navigate = useNavigate();
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     initializeCases();
@@ -42,6 +44,14 @@ export const CasesListPage: React.FC = () => {
           </h1>
           <p className="text-sm text-white/40 mt-0.5">{cases.length} {t('case.casesInDb', 'cases in database')}</p>
         </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="px-4 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg transition-transform active:scale-95 text-sm"
+          style={{ background: 'linear-gradient(135deg, #D97706, #F59E0B)', color: '#000000' }}
+        >
+          <Plus size={16} />
+          {t('dashboard.newCase', 'New Case')}
+        </button>
       </div>
 
       {/* Status Filter */}
@@ -113,6 +123,15 @@ export const CasesListPage: React.FC = () => {
           ))}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {showCreateModal && (
+          <CreateCaseModal
+            onClose={() => setShowCreateModal(false)}
+            onCreated={(newCase) => navigate(`/cases/${newCase.id}`)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

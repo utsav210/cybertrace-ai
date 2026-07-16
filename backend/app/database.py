@@ -53,7 +53,26 @@ def initialize_database():
         assigned_to TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        amount_lost REAL DEFAULT 0.0
+        amount_lost REAL DEFAULT 0.0,
+        category TEXT DEFAULT '',
+        subcategory TEXT DEFAULT '',
+        incident_date TEXT DEFAULT '',
+        incident_time TEXT DEFAULT '',
+        delay_reason TEXT DEFAULT '',
+        platform TEXT DEFAULT '',
+        suspect_details TEXT DEFAULT '',
+        complainant_email TEXT DEFAULT '',
+        complainant_address TEXT DEFAULT '',
+        state TEXT DEFAULT '',
+        district TEXT DEFAULT '',
+        police_station TEXT DEFAULT '',
+        pincode TEXT DEFAULT '',
+        national_id_type TEXT DEFAULT '',
+        national_id_number TEXT DEFAULT '',
+        payment_method TEXT DEFAULT '',
+        bank_account TEXT DEFAULT '',
+        ifsc_code TEXT DEFAULT '',
+        utr_number TEXT DEFAULT ''
     );
     """)
 
@@ -155,7 +174,25 @@ def initialize_database():
         description TEXT NOT NULL,
         amount_lost REAL DEFAULT 0.0,
         status TEXT NOT NULL,
-        assigned_case_id TEXT
+        assigned_case_id TEXT,
+        subcategory TEXT DEFAULT '',
+        incident_date TEXT DEFAULT '',
+        incident_time TEXT DEFAULT '',
+        delay_reason TEXT DEFAULT '',
+        platform TEXT DEFAULT '',
+        suspect_details TEXT DEFAULT '',
+        complainant_email TEXT DEFAULT '',
+        complainant_address TEXT DEFAULT '',
+        state TEXT DEFAULT '',
+        district TEXT DEFAULT '',
+        police_station TEXT DEFAULT '',
+        pincode TEXT DEFAULT '',
+        national_id_type TEXT DEFAULT '',
+        national_id_number TEXT DEFAULT '',
+        payment_method TEXT DEFAULT '',
+        bank_account TEXT DEFAULT '',
+        ifsc_code TEXT DEFAULT '',
+        utr_number TEXT DEFAULT ''
     );
     """)
 
@@ -167,6 +204,43 @@ def initialize_database():
     );
     """)
 
+    conn.commit()
+
+    # Defensive automatic migration: add NCRP columns to existing cases table safely
+    ncrp_columns = [
+        ("category", "TEXT DEFAULT ''"),
+        ("subcategory", "TEXT DEFAULT ''"),
+        ("incident_date", "TEXT DEFAULT ''"),
+        ("incident_time", "TEXT DEFAULT ''"),
+        ("delay_reason", "TEXT DEFAULT ''"),
+        ("platform", "TEXT DEFAULT ''"),
+        ("suspect_details", "TEXT DEFAULT ''"),
+        ("complainant_email", "TEXT DEFAULT ''"),
+        ("complainant_address", "TEXT DEFAULT ''"),
+        ("state", "TEXT DEFAULT ''"),
+        ("district", "TEXT DEFAULT ''"),
+        ("police_station", "TEXT DEFAULT ''"),
+        ("pincode", "TEXT DEFAULT ''"),
+        ("national_id_type", "TEXT DEFAULT ''"),
+        ("national_id_number", "TEXT DEFAULT ''"),
+        ("payment_method", "TEXT DEFAULT ''"),
+        ("bank_account", "TEXT DEFAULT ''"),
+        ("ifsc_code", "TEXT DEFAULT ''"),
+        ("utr_number", "TEXT DEFAULT ''")
+    ]
+    for col_name, col_def in ncrp_columns:
+        try:
+            cursor.execute(f"ALTER TABLE cases ADD COLUMN {col_name} {col_def};")
+        except sqlite3.OperationalError:
+            pass # Column already exists
+
+    for col_name, col_def in ncrp_columns:
+        if col_name == "category":
+            continue # citizen_complaints already has category by default
+        try:
+            cursor.execute(f"ALTER TABLE citizen_complaints ADD COLUMN {col_name} {col_def};")
+        except sqlite3.OperationalError:
+            pass # Column already exists
     conn.commit()
 
     # Ensure settings default row exists
@@ -198,7 +272,7 @@ def initialize_database():
             ("NCRP-2026-89240", "2026-07-14T11:45:00Z", "Amit Shah", "+91 91234 56789", "Social Media Impersonation", "Relative's fake Facebook account created demanding emergency medical funds.", 30000.0, "Received - Under Triage", "case-003"),
             ("NCRP-2026-89551", "2026-07-14T12:20:00Z", "Neha Verma", "+91 94221 11223", "Investment / Crypto Scam", "Added to Telegram group promising 300% daily returns on Bitcoin cloud mining.", 120000.0, "Received - Under Triage", None)
         ]
-        cursor.executemany("INSERT INTO citizen_complaints VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", sample_complaints)
+        cursor.executemany("INSERT INTO citizen_complaints (id, created_at, complainant_name, complainant_phone, category, description, amount_lost, status, assigned_case_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", sample_complaints)
         conn.commit()
 
     # Seed initial data if table is empty
@@ -235,7 +309,7 @@ def initialize_database():
              "Victim paid registration fee for fake government job offer, lost ₹15,000.",
              "closed", "Deepak Verma", "+91 87654 32109", "officer.raj", "2026-04-15T13:00:00", "2026-05-10T11:00:00", 15000.0)
         ]
-        cursor.executemany("INSERT INTO cases VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", cases_data)
+        cursor.executemany("INSERT INTO cases (id, case_number, title, description, status, complainant, complainant_phone, assigned_to, created_at, updated_at, amount_lost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", cases_data)
 
         # Evidence
         evidence_data = [

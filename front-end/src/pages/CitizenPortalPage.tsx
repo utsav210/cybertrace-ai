@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
+import { useCaseStore } from '../store/caseStore';
 import { useNavigate } from 'react-router-dom';
 
 interface ComplaintTicket {
@@ -19,6 +20,24 @@ interface ComplaintTicket {
   amountLost: number;
   status: string;
   assignedCaseId?: string | null;
+  subcategory?: string;
+  incidentDate?: string;
+  incidentTime?: string;
+  delayReason?: string;
+  platform?: string;
+  suspectDetails?: string;
+  complainantEmail?: string;
+  complainantAddress?: string;
+  state?: string;
+  district?: string;
+  policeStation?: string;
+  pincode?: string;
+  nationalIdType?: string;
+  nationalIdNumber?: string;
+  paymentMethod?: string;
+  bankAccount?: string;
+  ifscCode?: string;
+  utrNumber?: string;
 }
 
 const SAFETY_TIPS = [
@@ -62,13 +81,36 @@ export const CitizenPortalPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'intake' | 'track' | 'advisories'>('intake');
 
   // Intake Form State
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [category, setCategory] = useState('Financial Fraud / UPI Scam');
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
+  const initialFormState = {
+    complainantName: '',
+    complainantPhone: '',
+    complainantEmail: '',
+    complainantAddress: '',
+    state: 'Maharashtra',
+    district: '',
+    policeStation: '',
+    pincode: '',
+    nationalIdType: 'Aadhaar Card',
+    nationalIdNumber: '',
+    category: 'Financial Fraud / UPI Scam',
+    subcategory: '',
+    incidentDate: '',
+    incidentTime: '',
+    delayReason: '',
+    platform: '',
+    suspectDetails: '',
+    description: '',
+    amountLost: '',
+    paymentMethod: 'UPI',
+    bankAccount: '',
+    ifscCode: '',
+    utrNumber: ''
+  };
+
+  const [form, setForm] = useState(initialFormState);
   const [submitting, setSubmitting] = useState(false);
   const [submittedTicket, setSubmittedTicket] = useState<ComplaintTicket | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Tracking & List State
   const [complaints, setComplaints] = useState<ComplaintTicket[]>([]);
@@ -99,7 +141,24 @@ export const CitizenPortalPage: React.FC = () => {
 
   const handleSubmitComplaint = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim() || !description.trim()) return;
+    setValidationError(null);
+
+    // OWASP Frontend Validation
+    if (!form.complainantName.trim() || !form.complainantPhone.trim() || !form.description.trim()) {
+      setValidationError('Please complete all required fields (*).');
+      return;
+    }
+
+    const phoneRegex = /^[0-9+() -]{10,15}$/;
+    if (!phoneRegex.test(form.complainantPhone.trim())) {
+      setValidationError('Please enter a valid 10 to 15 digit contact phone number.');
+      return;
+    }
+
+    if (form.utrNumber.trim() && !/^[A-Za-z0-9]{8,22}$/.test(form.utrNumber.trim())) {
+      setValidationError('Please enter a valid 8 to 22 alphanumeric UTR / Transaction Reference Number.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -107,23 +166,42 @@ export const CitizenPortalPage: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          complainantName: name,
-          complainantPhone: phone,
-          category,
-          amountLost: parseFloat(amount) || 0,
-          description
+          complainantName: form.complainantName,
+          complainantPhone: form.complainantPhone,
+          complainantEmail: form.complainantEmail,
+          complainantAddress: form.complainantAddress,
+          state: form.state,
+          district: form.district,
+          policeStation: form.policeStation,
+          pincode: form.pincode,
+          nationalIdType: form.nationalIdType,
+          nationalIdNumber: form.nationalIdNumber,
+          category: form.category,
+          subcategory: form.subcategory,
+          incidentDate: form.incidentDate,
+          incidentTime: form.incidentTime,
+          delayReason: form.delayReason,
+          platform: form.platform,
+          suspectDetails: form.suspectDetails,
+          description: form.description,
+          amountLost: parseFloat(form.amountLost) || 0,
+          paymentMethod: form.paymentMethod,
+          bankAccount: form.bankAccount,
+          ifscCode: form.ifscCode,
+          utrNumber: form.utrNumber
         })
       });
       if (res.ok) {
         const json = await res.json();
         setSubmittedTicket(json.complaint);
-        setName('');
-        setPhone('');
-        setAmount('');
-        setDescription('');
+        setForm(initialFormState);
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        setValidationError(errJson.error || 'Server error while registering incident.');
       }
     } catch (err) {
       console.error('Failed to submit complaint:', err);
+      setValidationError('Network error: Unable to reach CyberTrace portal.');
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +218,8 @@ export const CitizenPortalPage: React.FC = () => {
       if (res.ok) {
         const json = await res.json();
         await fetchComplaints();
-        // Redirect or show alert
+        // Synchronize central caseStore so CasesListPage table and CaseDetailPage are updated immediately
+        await useCaseStore.getState().initializeCases();
         if (json.caseId) {
           navigate(`/cases/${json.caseId}`);
         }
@@ -307,81 +386,336 @@ export const CitizenPortalPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmitComplaint} className="space-y-5">
+              <form onSubmit={handleSubmitComplaint} className="space-y-6">
                 <div className="border-b border-white/10 pb-3">
-                  <h3 className="font-bold text-base text-white">{t('portal.formTitle', 'Incident Registration Form')}</h3>
-                  <p className="text-xs text-white/50">{t('portal.formSubtitle', 'Fill in accurate details to help law enforcement officers initiate swift triage')}</p>
+                  <h3 className="font-bold text-lg text-white flex items-center gap-2">
+                    <Shield className="text-amber-400" size={20} />
+                    {t('portal.formTitle', 'NCRP / 1930 Citizen Incident Registration')}
+                  </h3>
+                  <p className="text-xs text-white/60 mt-1">
+                    {t('portal.formSubtitle', 'As per Indian Cyber Crime Portal guidelines, please complete victim profile, incident categorization, suspect IOCs, and financial trail accurate details.')}
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {validationError && (
+                  <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/40 text-red-400 text-xs flex items-start gap-2.5 animate-shake">
+                    <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="block font-bold">Registration Validation Alert:</strong>
+                      <span>{validationError}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 1: Victim Profile & Jurisdiction */}
+                <div className="space-y-4 p-4 rounded-2xl bg-black/30 border border-white/10">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                    Section 1: Complainant Profile & Jurisdiction
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="form-label">Complainant Name <span className="text-red-400">*</span></label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g., Vikram Desai"
+                        value={form.complainantName}
+                        onChange={(e) => setForm({ ...form, complainantName: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Contact Mobile / Phone <span className="text-red-400">*</span></label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="+91 98765 43210"
+                        value={form.complainantPhone}
+                        onChange={(e) => setForm({ ...form, complainantPhone: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="form-label">Email Address</label>
+                      <input
+                        type="email"
+                        placeholder="e.g., vikram.desai@gmail.com"
+                        value={form.complainantEmail}
+                        onChange={(e) => setForm({ ...form, complainantEmail: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Physical Address / Street</label>
+                      <input
+                        type="text"
+                        placeholder="House No, Society, Area"
+                        value={form.complainantAddress}
+                        onChange={(e) => setForm({ ...form, complainantAddress: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label className="form-label">State / UT</label>
+                      <select
+                        value={form.state}
+                        onChange={(e) => setForm({ ...form, state: e.target.value })}
+                        className="form-input w-full text-xs"
+                      >
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Gujarat">Gujarat</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="West Bengal">West Bengal</option>
+                        <option value="Telangana">Telangana</option>
+                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Other">Other State / UT</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">District / City</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Pune / Surat"
+                        value={form.district}
+                        onChange={(e) => setForm({ ...form, district: e.target.value })}
+                        className="form-input w-full text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Police Station</label>
+                      <input
+                        type="text"
+                        placeholder="Jurisdictional P.S."
+                        value={form.policeStation}
+                        onChange={(e) => setForm({ ...form, policeStation: e.target.value })}
+                        className="form-input w-full text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Pincode</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 411001"
+                        value={form.pincode}
+                        onChange={(e) => setForm({ ...form, pincode: e.target.value })}
+                        className="form-input w-full text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-t border-white/05">
+                    <div>
+                      <label className="form-label">National ID Type</label>
+                      <select
+                        value={form.nationalIdType}
+                        onChange={(e) => setForm({ ...form, nationalIdType: e.target.value })}
+                        className="form-input w-full"
+                      >
+                        <option value="Aadhaar Card">Aadhaar Card (XXXX-XXXX-1234)</option>
+                        <option value="PAN Card">PAN Card (ABCDE1234F)</option>
+                        <option value="Voter ID">Voter ID (EPIC)</option>
+                        <option value="Passport">Passport Number</option>
+                        <option value="Driving License">Driving License</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">National ID Number / Reference</label>
+                      <input
+                        type="text"
+                        placeholder="Enter ID / Document Number"
+                        value={form.nationalIdNumber}
+                        onChange={(e) => setForm({ ...form, nationalIdNumber: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Incident Classification & Timing */}
+                <div className="space-y-4 p-4 rounded-2xl bg-black/30 border border-white/10">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                    Section 2: Incident Classification & Timing
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="form-label">Primary Incident Category <span className="text-red-400">*</span></label>
+                      <select
+                        value={form.category}
+                        onChange={(e) => setForm({ ...form, category: e.target.value })}
+                        className="form-input w-full"
+                      >
+                        <option value="Financial Fraud / UPI Scam">Financial Fraud / UPI Scam</option>
+                        <option value="Online Shopping / Fake OTP">Online Shopping / Fake OTP</option>
+                        <option value="Social Media Impersonation">Social Media Impersonation</option>
+                        <option value="Investment / Crypto Scam">Investment / Crypto Scam</option>
+                        <option value="Digital Arrest / Extortion">Digital Arrest / Extortion</option>
+                        <option value="Job Offer / Task Fraud">Job Offer / Task Fraud</option>
+                        <option value="Cyber Bullying / Harassment">Cyber Bullying / Harassment</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">Subcategory / Modus Operandi</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. APK Malware, Fake KYC Link, Telegram Group"
+                        value={form.subcategory}
+                        onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="form-label">Date of Incident</label>
+                      <input
+                        type="date"
+                        value={form.incidentDate}
+                        onChange={(e) => setForm({ ...form, incidentDate: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Time of Incident</label>
+                      <input
+                        type="time"
+                        value={form.incidentTime}
+                        onChange={(e) => setForm({ ...form, incidentTime: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Delay Reason (If &gt; 24h)</label>
+                      <input
+                        type="text"
+                        placeholder="Reason for late reporting"
+                        value={form.delayReason}
+                        onChange={(e) => setForm({ ...form, delayReason: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Platform & Suspect Details */}
+                <div className="space-y-4 p-4 rounded-2xl bg-black/30 border border-white/10">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                    Section 3: Platform & Suspect Details
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="form-label">Platform / Medium Involved</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. WhatsApp, Telegram, PhonePe, SBI YONO, Instagram"
+                        value={form.platform}
+                        onChange={(e) => setForm({ ...form, platform: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Suspect Details / IOCs</label>
+                      <input
+                        type="text"
+                        placeholder="Suspect Phone, UPI ID, Bank Acc, or URL"
+                        value={form.suspectDetails}
+                        onChange={(e) => setForm({ ...form, suspectDetails: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <label className="form-label">{t('portal.nameLabel', 'Complainant / Victim Name')} <span className="text-red-400">*</span></label>
-                    <input
-                      type="text"
+                    <label className="form-label">Full Incident Statement & Description <span className="text-red-400">*</span></label>
+                    <textarea
+                      rows={4}
                       required
-                      placeholder="e.g., Vikram Desai"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="form-input w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">{t('portal.phoneLabel', 'Contact Phone / Mobile')} <span className="text-red-400">*</span></label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+91 98765 43210"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="form-input w-full"
+                      placeholder="Provide complete chronological summary of the incident: how initial contact was made, transaction sequence, any fraudulent calls received, and exact loss timeline..."
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      className="form-input w-full leading-relaxed"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="form-label">{t('portal.categoryLabel', 'Incident Category')} <span className="text-red-400">*</span></label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="form-input w-full"
-                    >
-                      <option value="Financial Fraud / UPI Scam">Financial Fraud / UPI Scam</option>
-                      <option value="Online Shopping / Fake OTP">Online Shopping / Fake OTP</option>
-                      <option value="Social Media Impersonation">Social Media Impersonation</option>
-                      <option value="Investment / Crypto Scam">Investment / Crypto Scam</option>
-                      <option value="Digital Arrest / Extortion">Digital Arrest / Extortion</option>
-                      <option value="Job Offer / Task Fraud">Job Offer / Task Fraud</option>
-                    </select>
+                {/* Section 4: Financial Loss Trail */}
+                <div className="space-y-4 p-4 rounded-2xl bg-black/30 border border-white/10">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                    Section 4: Financial Loss & Banking Trail
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="form-label">Total Amount Lost (₹)</label>
+                      <input
+                        type="number"
+                        placeholder="e.g., 50000 (Enter 0 if no financial loss)"
+                        value={form.amountLost}
+                        onChange={(e) => setForm({ ...form, amountLost: e.target.value })}
+                        className="form-input w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Payment / Transfer Method</label>
+                      <select
+                        value={form.paymentMethod}
+                        onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
+                        className="form-input w-full"
+                      >
+                        <option value="UPI">UPI (GooglePay / PhonePe / Paytm / BHIM)</option>
+                        <option value="Net Banking / NEFT / RTGS">Net Banking / NEFT / RTGS</option>
+                        <option value="Credit / Debit Card">Credit / Debit Card</option>
+                        <option value="Digital Wallet">Digital Wallet (Mobikwik, Amazon Pay)</option>
+                        <option value="Crypto Transfer">Cryptocurrency / USDT Transfer</option>
+                        <option value="Other">Other / Non-Financial</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="form-label">{t('portal.amountLabel', 'Total Amount Lost (₹)')}</label>
-                    <input
-                      type="number"
-                      placeholder="e.g., 50000 (0 if none)"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="form-input w-full"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="form-label">Victim Bank Account Number</label>
+                      <input
+                        type="text"
+                        placeholder="Your debited Account No."
+                        value={form.bankAccount}
+                        onChange={(e) => setForm({ ...form, bankAccount: e.target.value })}
+                        className="form-input w-full text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Bank IFSC Code</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., SBIN0001234"
+                        value={form.ifscCode}
+                        onChange={(e) => setForm({ ...form, ifscCode: e.target.value })}
+                        className="form-input w-full text-xs font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">1930 / UTR Reference No.</label>
+                      <input
+                        type="text"
+                        placeholder="12-digit UTR / Txn Reference"
+                        value={form.utrNumber}
+                        onChange={(e) => setForm({ ...form, utrNumber: e.target.value })}
+                        className="form-input w-full text-xs font-mono"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="form-label">{t('portal.descLabel', 'Incident Description & Statement')} <span className="text-red-400">*</span></label>
-                  <textarea
-                    rows={4}
-                    required
-                    placeholder="Provide detailed summary including dates, bank account names, UPI IDs, phone numbers called from, or website links..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="form-input w-full leading-relaxed"
-                  />
-                </div>
-
-                <div className="p-3 rounded-xl bg-amber-400/05 border border-amber-400/20 text-xs text-amber-300 flex items-start gap-2">
-                  <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                <div className="p-4 rounded-xl bg-amber-400/05 border border-amber-400/20 text-xs text-amber-300 flex items-start gap-2.5">
+                  <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
                   <span>
-                    <strong>Notice:</strong> {t('portal.notice', 'All registered tickets are immediately synchronized with the National Cyber Crime Portal (NCRP) and accessible to assigned desk officers for verification under Section 154 CrPC / BNSS.')}
+                    <strong>Legal & Security Notice:</strong> {t('portal.notice', 'By submitting this intake form, your details are cryptographically hashed and transmitted to the National Cyber Crime Portal (NCRP / I4C gateway) under Section 154 CrPC / BNSS. False complaints are punishable under law.')}
                   </span>
                 </div>
 
@@ -389,10 +723,10 @@ export const CitizenPortalPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-3 rounded-xl text-sm font-bold btn-accent flex items-center gap-2 shadow-lg hover:shadow-amber-500/20 disabled:opacity-50"
+                    className="px-8 py-3.5 rounded-xl text-sm font-bold btn-accent flex items-center gap-2 shadow-lg hover:shadow-amber-500/20 disabled:opacity-50 transition-all"
                   >
-                    {submitting ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
-                    {submitting ? t('portal.submitting', 'Submitting...') : t('portal.submitBtn', 'Submit Complaint to Intake Queue')}
+                    {submitting ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
+                    {submitting ? t('portal.submitting', 'Registering with NCRP Node...') : t('portal.submitBtn', 'Submit Complaint to Intake Queue')}
                   </button>
                 </div>
               </form>
@@ -479,6 +813,14 @@ export const CitizenPortalPage: React.FC = () => {
                       <p className="text-xs text-white/70 leading-relaxed line-clamp-2 mt-1">
                         "{ticket.description}"
                       </p>
+                      {(ticket.platform || ticket.state || ticket.utrNumber || ticket.bankAccount) && (
+                        <div className="flex flex-wrap gap-2 pt-2 border-t border-white/05 text-[11px] text-white/60">
+                          {ticket.platform && <span className="bg-black/30 px-2 py-0.5 rounded border border-white/10">💻 Platform: <strong className="text-white">{ticket.platform}</strong></span>}
+                          {(ticket.state || ticket.district) && <span className="bg-black/30 px-2 py-0.5 rounded border border-white/10">📍 Jurisdiction: <strong className="text-white">{ticket.state} {ticket.district}</strong></span>}
+                          {ticket.bankAccount && <span className="bg-black/30 px-2 py-0.5 rounded border border-white/10">🏦 Acc: <strong className="font-mono text-white">{ticket.bankAccount}</strong></span>}
+                          {ticket.utrNumber && <span className="bg-black/30 px-2 py-0.5 rounded border border-white/10">🔗 UTR: <strong className="font-mono text-amber-300">{ticket.utrNumber}</strong></span>}
+                        </div>
+                      )}
                       <div className="flex items-center gap-4 text-[11px] text-white/40 font-mono pt-1">
                         <span>Filed: {new Date(ticket.createdAt).toLocaleString('en-IN')}</span>
                         <span>Amount Involved: ₹{Number(ticket.amountLost || 0).toLocaleString('en-IN')}</span>

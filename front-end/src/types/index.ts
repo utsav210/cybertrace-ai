@@ -26,6 +26,25 @@ export interface Case {
   updatedAt: string;
   amountLost?: number;
   category?: string;
+  // Indian Cyber Crime Portal (NCRP / 1930 I4C) Intake Fields
+  subcategory?: string;
+  incidentDate?: string;
+  incidentTime?: string;
+  delayReason?: string;
+  platform?: string;
+  suspectDetails?: string;
+  complainantEmail?: string;
+  complainantAddress?: string;
+  state?: string;
+  district?: string;
+  policeStation?: string;
+  pincode?: string;
+  nationalIdType?: string;
+  nationalIdNumber?: string;
+  paymentMethod?: string;
+  bankAccount?: string;
+  ifscCode?: string;
+  utrNumber?: string;
 }
 
 export type EvidenceType = 'pdf' | 'image' | 'csv' | 'other';

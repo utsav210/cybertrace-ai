@@ -11,6 +11,7 @@ import { useNotificationStore } from '../store/notificationStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Case } from '../types';
 import clsx from 'clsx';
+import { CreateCaseModal } from '../components/case/CreateCaseModal';
 
 // ─── Animated Counter ──────────────────────────────────────────────────────────
 const AnimatedCounter: React.FC<{ target: number; duration?: number }> = ({ target, duration = 1500 }) => {
@@ -42,134 +43,6 @@ const StatusBadge: React.FC<{ status: Case['status'] }> = ({ status }) => {
   };
   const { cls, label } = map[status];
   return <span className={cls}>{label}</span>;
-};
-
-// ─── Create Case Modal ─────────────────────────────────────────────────────────
-const CreateCaseModal: React.FC<{ onClose: () => void; onCreated: (c: Case) => void }> = ({ onClose, onCreated }) => {
-  const { t } = useTranslation();
-  const { addCase, cases } = useCaseStore();
-  const [form, setForm] = useState({ title: '', description: '', complainant: '', phone: '' });
-  const [creating, setCreating] = useState(false);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title.trim()) return;
-    setCreating(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    const newCase = await addCase({
-      title: form.title,
-      description: form.description,
-      complainant: form.complainant || 'Unknown',
-      complainantPhone: form.phone || '',
-      status: 'open',
-      assignedTo: 'officer.raj',
-    });
-    setCreating(false);
-    onCreated(newCase);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="glass-modal w-full max-w-lg relative z-10 p-6"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-lg font-bold">{t('modal.createCase')}</h2>
-            <p className="text-xs text-white/40 mt-0.5">Next case: CCB/2026/00{String(cases.length + 1).padStart(2, '0')}</p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-            <X size={16} />
-          </button>
-        </div>
-
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div>
-            <label className="form-label">{t('modal.caseTitle')} *</label>
-            <div className="relative">
-              <FileText size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="form-input pl-8"
-                placeholder="e.g. UPI Fraud via Phishing Link"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="form-label">{t('modal.caseDescription')}</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="form-input resize-none h-24"
-              placeholder="Describe the case..."
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="form-label">{t('modal.complainantName')}</label>
-              <div className="relative">
-                <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                <input
-                  type="text"
-                  value={form.complainant}
-                  onChange={(e) => setForm({ ...form, complainant: e.target.value })}
-                  className="form-input pl-8"
-                  placeholder="Vikram Desai"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="form-label">{t('modal.complainantPhone')}</label>
-              <div className="relative">
-                <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                <input
-                  type="text"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="form-input pl-8"
-                  placeholder="+91 98765 43210"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/08 transition-all border border-white/10">
-              {t('modal.cancel')}
-            </button>
-            <button
-              type="submit"
-              disabled={creating || !form.title.trim()}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
-              style={{ background: 'linear-gradient(135deg, #1E3A8A, #2563eb)', color: 'white' }}
-            >
-              {creating ? (
-                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('modal.creating')}</>
-              ) : (
-                <>{t('modal.create')}</>
-              )}
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </div>
-  );
 };
 
 // ─── Dashboard Page ────────────────────────────────────────────────────────────

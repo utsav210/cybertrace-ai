@@ -102,6 +102,42 @@ def login():
     return jsonify({"error": "Invalid credentials"}), 401
 
 # Cases list
+def format_case_row(c):
+    if not c:
+        return None
+    return {
+        "id": c["id"],
+        "caseNumber": c["case_number"],
+        "title": c["title"],
+        "description": c["description"],
+        "status": c["status"],
+        "complainant": c["complainant"],
+        "complainantPhone": c["complainant_phone"],
+        "assignedTo": c["assigned_to"],
+        "createdAt": c["created_at"],
+        "updatedAt": c["updated_at"],
+        "amountLost": c["amount_lost"],
+        "category": c.get("category", ""),
+        "subcategory": c.get("subcategory", ""),
+        "incidentDate": c.get("incident_date", ""),
+        "incidentTime": c.get("incident_time", ""),
+        "delayReason": c.get("delay_reason", ""),
+        "platform": c.get("platform", ""),
+        "suspectDetails": c.get("suspect_details", ""),
+        "complainantEmail": c.get("complainant_email", ""),
+        "complainantAddress": c.get("complainant_address", ""),
+        "state": c.get("state", ""),
+        "district": c.get("district", ""),
+        "policeStation": c.get("police_station", ""),
+        "pincode": c.get("pincode", ""),
+        "nationalIdType": c.get("national_id_type", ""),
+        "nationalIdNumber": c.get("national_id_number", ""),
+        "paymentMethod": c.get("payment_method", ""),
+        "bankAccount": c.get("bank_account", ""),
+        "ifscCode": c.get("ifsc_code", ""),
+        "utrNumber": c.get("utr_number", "")
+    }
+
 @app.route('/api/cases', methods=['GET'])
 def get_cases():
     conn = get_db_connection()
@@ -110,32 +146,51 @@ def get_cases():
     rows = cursor.fetchall()
     conn.close()
     
-    cases = []
-    for r in rows:
-        c = row_to_dict(r)
-        # Rename keys to match camelCase frontend types
-        cases.append({
-            "id": c["id"],
-            "caseNumber": c["case_number"],
-            "title": c["title"],
-            "description": c["description"],
-            "status": c["status"],
-            "complainant": c["complainant"],
-            "complainantPhone": c["complainant_phone"],
-            "assignedTo": c["assigned_to"],
-            "createdAt": c["created_at"],
-            "updatedAt": c["updated_at"],
-            "amountLost": c["amount_lost"]
-        })
+    cases = [format_case_row(row_to_dict(r)) for r in rows]
     return jsonify(cases)
 
 # Create Case
 @app.route('/api/cases', methods=['POST'])
 def create_case():
-    data = request.get_json()
-    if not data or 'title' not in data or 'complainant' not in data:
-        return jsonify({"error": "Missing required fields"}), 400
+    data = request.get_json() or {}
+    
+    title = sanitize_string(str(data.get('title', ''))).strip()
+    complainant = sanitize_string(str(data.get('complainant', ''))).strip()
+    if not title or not complainant:
+        return jsonify({"error": "Missing required fields (title, complainant)"}), 400
         
+    description = sanitize_string(str(data.get('description', '')))
+    status = sanitize_string(str(data.get('status', 'open')))
+    if status not in ('open', 'active', 'closed'):
+        status = 'open'
+    complainant_phone = sanitize_string(str(data.get('complainantPhone', '')))
+    assigned_to = sanitize_string(str(data.get('assignedTo', 'officer.raj')))
+    
+    try:
+        amount_lost = float(data.get('amountLost', 0.0))
+    except (ValueError, TypeError):
+        amount_lost = 0.0
+
+    category = sanitize_string(str(data.get('category', 'Financial Fraud / UPI Scam')))
+    subcategory = sanitize_string(str(data.get('subcategory', '')))
+    incident_date = sanitize_string(str(data.get('incidentDate', '')))
+    incident_time = sanitize_string(str(data.get('incidentTime', '')))
+    delay_reason = sanitize_string(str(data.get('delayReason', '')))
+    platform = sanitize_string(str(data.get('platform', '')))
+    suspect_details = sanitize_string(str(data.get('suspectDetails', '')))
+    complainant_email = sanitize_string(str(data.get('complainantEmail', '')))
+    complainant_address = sanitize_string(str(data.get('complainantAddress', '')))
+    state = sanitize_string(str(data.get('state', '')))
+    district = sanitize_string(str(data.get('district', '')))
+    police_station = sanitize_string(str(data.get('policeStation', '')))
+    pincode = sanitize_string(str(data.get('pincode', '')))
+    national_id_type = sanitize_string(str(data.get('nationalIdType', '')))
+    national_id_number = sanitize_string(str(data.get('nationalIdNumber', '')))
+    payment_method = sanitize_string(str(data.get('paymentMethod', '')))
+    bank_account = sanitize_string(str(data.get('bankAccount', '')))
+    ifsc_code = sanitize_string(str(data.get('ifscCode', ''))).upper()
+    utr_number = sanitize_string(str(data.get('utrNumber', '')))
+
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -147,41 +202,27 @@ def create_case():
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ")
     
     cursor.execute(
-        """INSERT INTO cases (id, case_number, title, description, status, complainant, complainant_phone, assigned_to, created_at, updated_at, amount_lost) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);""",
+        """INSERT INTO cases (
+               id, case_number, title, description, status, complainant, complainant_phone, assigned_to, created_at, updated_at, amount_lost,
+               category, subcategory, incident_date, incident_time, delay_reason, platform, suspect_details, complainant_email, complainant_address,
+               state, district, police_station, pincode, national_id_type, national_id_number, payment_method, bank_account, ifsc_code, utr_number
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);""",
         (
-            case_id,
-            case_number,
-            data['title'],
-            data.get('description', ''),
-            data.get('status', 'open'),
-            data['complainant'],
-            data.get('complainantPhone', ''),
-            data.get('assignedTo', 'officer.raj'),
-            now,
-            now,
-            float(data.get('amountLost', 0))
+            case_id, case_number, title, description, status, complainant, complainant_phone, assigned_to, now, now, amount_lost,
+            category, subcategory, incident_date, incident_time, delay_reason, platform, suspect_details, complainant_email, complainant_address,
+            state, district, police_station, pincode, national_id_type, national_id_number, payment_method, bank_account, ifsc_code, utr_number
         )
     )
     conn.commit()
+    
+    cursor.execute("SELECT * FROM cases WHERE id = ?;", (case_id,))
+    row = cursor.fetchone()
     conn.close()
     
-    create_audit_log(data.get('assignedTo', 'officer.raj'), "CASE_CREATED", case_number, request.remote_addr or "127.0.0.1", data['title'])
+    create_audit_log(assigned_to, "CASE_CREATED", case_number, request.remote_addr or "127.0.0.1", title)
+    create_notification("New NCRP Case Created", f"Case {case_number} registered under {category}.", "info", case_id)
     
-    new_case = {
-        "id": case_id,
-        "caseNumber": case_number,
-        "title": data['title'],
-        "description": data.get('description', ''),
-        "status": data.get('status', 'open'),
-        "complainant": data['complainant'],
-        "complainantPhone": data.get('complainantPhone', ''),
-        "assignedTo": data.get('assignedTo', 'officer.raj'),
-        "createdAt": now,
-        "updatedAt": now,
-        "amountLost": float(data.get('amountLost', 0))
-    }
-    return jsonify(new_case)
+    return jsonify(format_case_row(row_to_dict(row))), 201
 
 # Case details
 @app.route('/api/cases/<case_id>', methods=['GET'])
@@ -195,20 +236,7 @@ def get_case_detail(case_id):
     if not row:
         return jsonify({"error": "Case not found"}), 404
         
-    c = row_to_dict(row)
-    return jsonify({
-        "id": c["id"],
-        "caseNumber": c["case_number"],
-        "title": c["title"],
-        "description": c["description"],
-        "status": c["status"],
-        "complainant": c["complainant"],
-        "complainantPhone": c["complainant_phone"],
-        "assignedTo": c["assigned_to"],
-        "createdAt": c["created_at"],
-        "updatedAt": c["updated_at"],
-        "amountLost": c["amount_lost"]
-    })
+    return jsonify(format_case_row(row_to_dict(row)))
 
 # Evidence upload & OCR Processing
 @app.route('/api/cases/<case_id>/evidence/upload', methods=['POST'])
@@ -926,6 +954,38 @@ def get_threat_intel():
     return jsonify(data)
 
 # --- CITIZEN ENGAGEMENT & HELPDESK PORTAL MODULE ---
+def format_citizen_complaint_row(c):
+    return {
+        "id": c["id"],
+        "createdAt": c["created_at"],
+        "complainantName": c["complainant_name"],
+        "complainantPhone": c["complainant_phone"],
+        "category": c["category"],
+        "description": c["description"],
+        "amountLost": c["amount_lost"],
+        "status": c["status"],
+        "assignedCaseId": c["assigned_case_id"],
+        "subcategory": c.get("subcategory", ""),
+        "incidentDate": c.get("incident_date", ""),
+        "incidentTime": c.get("incident_time", ""),
+        "delayReason": c.get("delay_reason", ""),
+        "platform": c.get("platform", ""),
+        "suspectDetails": c.get("suspect_details", ""),
+        "complainantEmail": c.get("complainant_email", ""),
+        "complainantAddress": c.get("complainant_address", ""),
+        "state": c.get("state", ""),
+        "district": c.get("district", ""),
+        "policeStation": c.get("police_station", ""),
+        "pincode": c.get("pincode", ""),
+        "nationalIdType": c.get("national_id_type", ""),
+        "nationalIdNumber": c.get("national_id_number", ""),
+        "paymentMethod": c.get("payment_method", ""),
+        "bankAccount": c.get("bank_account", ""),
+        "ifscCode": c.get("ifsc_code", ""),
+        "utrNumber": c.get("utr_number", "")
+    }
+
+# --- CITIZEN ENGAGEMENT & HELPDESK PORTAL MODULE ---
 @app.route('/api/portal/complaints', methods=['GET'])
 def get_citizen_complaints():
     initialize_database()
@@ -935,30 +995,17 @@ def get_citizen_complaints():
     rows = cursor.fetchall()
     conn.close()
     
-    complaints = []
-    for r in rows:
-        c = dict(r)
-        complaints.append({
-            "id": c["id"],
-            "createdAt": c["created_at"],
-            "complainantName": c["complainant_name"],
-            "complainantPhone": c["complainant_phone"],
-            "category": c["category"],
-            "description": c["description"],
-            "amountLost": c["amount_lost"],
-            "status": c["status"],
-            "assignedCaseId": c["assigned_case_id"]
-        })
+    complaints = [format_citizen_complaint_row(dict(r)) for r in rows]
     return jsonify(complaints)
 
 @app.route('/api/portal/complaints', methods=['POST'])
 def create_citizen_complaint():
     initialize_database()
     data = request.get_json() or {}
-    name = data.get("complainantName", "").strip()
-    phone = data.get("complainantPhone", "").strip()
-    category = data.get("category", "General Cyber Crime").strip()
-    desc = data.get("description", "").strip()
+    name = sanitize_string(str(data.get("complainantName", ""))).strip()
+    phone = sanitize_string(str(data.get("complainantPhone", ""))).strip()
+    category = sanitize_string(str(data.get("category", "General Cyber Crime"))).strip()
+    desc = sanitize_string(str(data.get("description", ""))).strip()
     try:
         amount = float(data.get("amountLost", 0.0))
     except (ValueError, TypeError):
@@ -967,17 +1014,48 @@ def create_citizen_complaint():
     if not name or not phone or not desc:
         return jsonify({"error": "Missing required complaint fields (name, phone, description)"}), 400
         
-    complaint_id = f"NCRP-2026-{int(time.time()) % 100000}"
+    complaint_id = f"NCRP-2026-{int(time.time() * 100) % 1000000}"
     created_at = time.strftime("%Y-%m-%dT%H:%M:%SZ")
     status = "Received - Under Triage"
+    
+    subcategory = sanitize_string(str(data.get("subcategory", ""))).strip()
+    incident_date = sanitize_string(str(data.get("incidentDate", ""))).strip()
+    incident_time = sanitize_string(str(data.get("incidentTime", ""))).strip()
+    delay_reason = sanitize_string(str(data.get("delayReason", ""))).strip()
+    platform = sanitize_string(str(data.get("platform", ""))).strip()
+    suspect_details = sanitize_string(str(data.get("suspectDetails", ""))).strip()
+    complainant_email = sanitize_string(str(data.get("complainantEmail", ""))).strip()
+    complainant_address = sanitize_string(str(data.get("complainantAddress", ""))).strip()
+    state = sanitize_string(str(data.get("state", ""))).strip()
+    district = sanitize_string(str(data.get("district", ""))).strip()
+    police_station = sanitize_string(str(data.get("policeStation", ""))).strip()
+    pincode = sanitize_string(str(data.get("pincode", ""))).strip()
+    national_id_type = sanitize_string(str(data.get("nationalIdType", ""))).strip()
+    national_id_number = sanitize_string(str(data.get("nationalIdNumber", ""))).strip()
+    payment_method = sanitize_string(str(data.get("paymentMethod", ""))).strip()
+    bank_account = sanitize_string(str(data.get("bankAccount", ""))).strip()
+    ifsc_code = sanitize_string(str(data.get("ifscCode", ""))).strip()
+    utr_number = sanitize_string(str(data.get("utrNumber", ""))).strip()
     
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO citizen_complaints (id, created_at, complainant_name, complainant_phone, category, description, amount_lost, status, assigned_case_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
-        (complaint_id, created_at, name, phone, category, desc, amount, status, None)
+        """INSERT INTO citizen_complaints (
+               id, created_at, complainant_name, complainant_phone, category, description, amount_lost, status, assigned_case_id,
+               subcategory, incident_date, incident_time, delay_reason, platform, suspect_details, complainant_email, complainant_address,
+               state, district, police_station, pincode, national_id_type, national_id_number, payment_method, bank_account, ifsc_code, utr_number
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);""",
+        (
+            complaint_id, created_at, name, phone, category, desc, amount, status, None,
+            subcategory, incident_date, incident_time, delay_reason, platform, suspect_details, complainant_email, complainant_address,
+            state, district, police_station, pincode, national_id_type, national_id_number, payment_method, bank_account, ifsc_code, utr_number
+        )
     )
     conn.commit()
+    
+    # Fetch inserted row to return standardized format
+    cursor.execute("SELECT * FROM citizen_complaints WHERE id = ?;", (complaint_id,))
+    row = cursor.fetchone()
     conn.close()
     
     create_audit_log(name, "CITIZEN_COMPLAINT_FILED", complaint_id, request.remote_addr or "127.0.0.1", f"Category: {category}, Amount: ₹{amount}")
@@ -985,7 +1063,7 @@ def create_citizen_complaint():
     
     return jsonify({
         "message": "Complaint successfully registered on NCRP / CyberTrace Portal.",
-        "complaint": {
+        "complaint": format_citizen_complaint_row(dict(row)) if row else {
             "id": complaint_id,
             "createdAt": created_at,
             "complainantName": name,
@@ -1002,7 +1080,7 @@ def create_citizen_complaint():
 def convert_complaint_to_case(complaint_id):
     initialize_database()
     data = request.get_json() or {}
-    actor = data.get("actor", "officer.raj")
+    actor = sanitize_string(str(data.get("actor", "officer.raj"))).strip() or "officer.raj"
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1018,13 +1096,27 @@ def convert_complaint_to_case(complaint_id):
         return jsonify({"error": f"Already assigned to case {c['assigned_case_id']}"}), 400
         
     # Generate new case number
-    case_id = f"case-{int(time.time()) % 10000}"
-    case_number = f"CCB/2026/{int(time.time()) % 10000}"
+    case_id = f"case-{int(time.time() * 100) % 1000000}"
+    case_number = f"CCB/2026/{int(time.time() * 100) % 100000}"
     created_at = time.strftime("%Y-%m-%dT%H:%M:%SZ")
     
     cursor.execute(
-        "INSERT INTO cases (id, case_number, title, description, status, complainant, complainant_phone, assigned_to, created_at, updated_at, amount_lost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-        (case_id, case_number, c["category"], c["description"], "open", c["complainant_name"], c["complainant_phone"], actor, created_at, created_at, c["amount_lost"])
+        """INSERT INTO cases (
+               id, case_number, title, description, status, complainant, complainant_phone, assigned_to, created_at, updated_at, amount_lost,
+               category, subcategory, incident_date, incident_time, delay_reason, platform, suspect_details, complainant_email, complainant_address,
+               state, district, police_station, pincode, national_id_type, national_id_number, payment_method, bank_account, ifsc_code, utr_number
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);""",
+        (
+            case_id, case_number, c["category"], c["description"], "open", c["complainant_name"], c["complainant_phone"], actor, created_at, created_at, c["amount_lost"],
+            c["category"], c.get("subcategory", ""), c.get("incident_date", ""), c.get("incident_time", ""), c.get("delay_reason", ""),
+            c.get("platform", "") or "Citizen Portal Intake",
+            c.get("suspect_details", "") or f"Ticket ID: {complaint_id}",
+            c.get("complainant_email", ""), c.get("complainant_address", ""),
+            c.get("state", ""), c.get("district", ""), c.get("police_station", ""), c.get("pincode", ""),
+            c.get("national_id_type", ""), c.get("national_id_number", ""),
+            c.get("payment_method", "") or "NCRP Portal Transfer",
+            c.get("bank_account", ""), c.get("ifsc_code", ""), c.get("utr_number", "")
+        )
     )
     
     cursor.execute(
@@ -1036,6 +1128,7 @@ def convert_complaint_to_case(complaint_id):
     
     create_audit_log(actor, "COMPLAINT_CONVERTED_TO_CASE", case_number, request.remote_addr or "127.0.0.1", f"Converted from ticket {complaint_id}")
     create_notification("Complaint Converted", f"Ticket {complaint_id} converted to Case {case_number} by {actor}.", "success", case_id)
+    
     
     return jsonify({
         "message": f"Successfully converted ticket to formal investigation case {case_number}",

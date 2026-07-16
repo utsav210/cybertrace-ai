@@ -70,6 +70,21 @@ export const useCaseStore = create<CaseState>((set, get) => ({
 
   loadCaseDetails: async (caseId: string) => {
     try {
+      // Synchronize exact case metadata from API first
+      const caseRes = await fetch(`/api/cases/${caseId}`);
+      if (caseRes.ok) {
+        const caseData = await caseRes.json() as Case;
+        set((state) => {
+          const exists = state.cases.some((c) => c.id === caseId);
+          if (exists) {
+            return { cases: state.cases.map((c) => (c.id === caseId ? caseData : c)) };
+          }
+          return { cases: [caseData, ...state.cases] };
+        });
+      } else if (get().cases.length === 0) {
+        await get().initializeCases();
+      }
+
       const evRes = await fetch(`/api/cases/${caseId}/evidence`);
       const evidence = evRes.ok ? await evRes.json() : get().evidence;
 
@@ -131,13 +146,17 @@ export const useCaseStore = create<CaseState>((set, get) => ({
     const nextNum = cases.length + 1;
     const caseNumber = `CCB/2026/00${String(nextNum).padStart(2, '0')}`;
     const newCase: Case = {
+      category: 'Financial Fraud / UPI Scam',
+      platform: '',
+      state: '',
+      paymentMethod: '',
       ...caseData,
       id: `case-${Date.now()}`,
       caseNumber,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    set({ cases: [...cases, newCase] });
+    set({ cases: [newCase, ...cases] });
     return newCase;
   },
 
