@@ -287,7 +287,7 @@ export const OsintSuitePage: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs text-white/50 mt-1 max-w-2xl">
-                Advanced cross-domain reconnaissance, identity profiling (`Sherlock`/`WhatsMyName`), and Censys/Shodan infrastructure inspection via rotated proxy nodes.
+                Advanced cross-domain reconnaissance, identity profiling (`Sherlock`/`WhatsMyName`), and Autonomous Nmap active infrastructure probing (`Zero Rate-Limit Mode`) via rotated proxy nodes.
               </p>
             </div>
           </div>
@@ -299,7 +299,7 @@ export const OsintSuitePage: React.FC = () => {
             </div>
             <div className="px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/25 flex items-center space-x-2 text-xs text-blue-300 font-mono">
               <Radio size={14} className="text-blue-400 animate-pulse" />
-              <span>Censys Platform v2: Ready</span>
+              <span>Autonomous Nmap Engine: Ready</span>
             </div>
           </div>
         </div>
@@ -327,7 +327,7 @@ export const OsintSuitePage: React.FC = () => {
           }`}
         >
           <Server size={16} />
-          <span>Tab B: Infrastructure Tracking (Censys/Shodan)</span>
+          <span>Tab B: Infrastructure Tracking (Autonomous Nmap)</span>
         </button>
         <button
           onClick={() => setActiveTab('exif')}
@@ -499,7 +499,7 @@ export const OsintSuitePage: React.FC = () => {
         <div className="space-y-6 animate-fade-in">
           <div className="glass-card p-6 space-y-4 border-l-4 border-blue-500">
             <h3 className="text-sm font-bold text-blue-400 flex items-center gap-2 uppercase tracking-wide">
-              <Server size={16} /> Censys Platform & Shodan Infrastructure Scanner
+              <Server size={16} /> Autonomous Active Nmap & X.509 Infrastructure Scanner
             </h3>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
@@ -520,7 +520,7 @@ export const OsintSuitePage: React.FC = () => {
                 {infraPolling ? (
                   <>
                     <RefreshCw size={16} className="animate-spin" />
-                    <span>Censys v2 Querying...</span>
+                    <span>Active Nmap Probing...</span>
                   </>
                 ) : (
                   <>
@@ -542,7 +542,7 @@ export const OsintSuitePage: React.FC = () => {
             <div className="glass-card p-6 space-y-3 text-center border border-blue-500/30 animate-pulse">
               <RefreshCw size={28} className="text-blue-400 animate-spin mx-auto" />
               <h4 className="text-sm font-bold text-white/90">Inspecting Open Ports, SANs & CVE Scores...</h4>
-              <p className="text-xs text-white/50">Calling `censys.search.v2` API via OpSec Proxy (`Task ID: {infraTaskId || 'dispatching'}`).</p>
+              <p className="text-xs text-white/50">Executing active Nmap `-sV` & socket reconnaissance (`Task ID: {infraTaskId || 'dispatching'}`).</p>
               <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden max-w-md mx-auto mt-2">
                 <div
                   className="bg-gradient-to-r from-blue-500 to-blue-300 h-full transition-all duration-500"
@@ -579,7 +579,7 @@ export const OsintSuitePage: React.FC = () => {
               {/* Services & Ports Table */}
               <div className="glass-card p-6 space-y-4">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Terminal size={16} className="text-blue-400" /> Censys Open Ports & Protocol Banners
+                  <Terminal size={16} className="text-blue-400" /> Active Nmap Open Ports & Protocol Banners
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs font-mono">
