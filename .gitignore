@@ -73,6 +73,8 @@ Thumbs.db
 # env and secret files
 .env
 .env.*
+!.env.osint.example
+!.env.example
 *.key
 *.pem
 *.secret*

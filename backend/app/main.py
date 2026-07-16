@@ -1,4 +1,10 @@
 import os
+try:
+    from dotenv import load_dotenv
+    load_dotenv(".env", override=False)
+    load_dotenv(".env.osint", override=True)
+except Exception:
+    pass
 import time
 import json
 import uuid
