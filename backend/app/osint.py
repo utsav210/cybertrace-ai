@@ -1,7 +1,7 @@
 import os
 try:
-    from dotenv import load_dotenv
-    load_dotenv(".env.osint", override=True)
+    from dotenv import load_dotenv, find_dotenv
+    load_dotenv(find_dotenv(".env.osint"), override=True)
 except Exception:
     pass
 import uuid

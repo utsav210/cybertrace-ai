@@ -51,6 +51,8 @@ class OpSecProxySession:
             "Accept": "application/json, text/plain, */*",
             "Accept-Language": "en-US,en;q=0.9"
         })
+        if self.proxy_url.startswith("#") or not any(self.proxy_url.startswith(s) for s in ("http://", "https://", "socks5://", "socks4://")):
+            self.proxy_url = ""
         if self.proxy_url and not self.proxy_url.startswith("demo_"):
             self.session.proxies = {
                 "http": self.proxy_url,
@@ -175,8 +177,8 @@ def generate_infrastructure_results(target: str) -> Dict[str, Any]:
     """Censys Platform SDK & Shodan infrastructure profiling pipeline."""
     # Reload .env.osint dynamically so user changes take immediate effect without server restart
     try:
-        from dotenv import load_dotenv
-        load_dotenv(".env.osint", override=True)
+        from dotenv import load_dotenv, find_dotenv
+        load_dotenv(find_dotenv(".env.osint"), override=True)
     except Exception as _e:
         pass
 
@@ -198,19 +200,35 @@ def generate_infrastructure_results(target: str) -> Dict[str, Any]:
             target_ip = clean_target
 
     censys_data = None
+    censys_v3_mode = False
     shodan_data = None
 
-    # 1. Attempt real Censys API v2 query if live credentials exist
-    if censys_id and censys_secret and not censys_id.startswith("demo_") and not censys_id.startswith("your_"):
+    # 1. Attempt real Censys API query (Support both v3 Personal Access Token & v2 API ID/Secret)
+    if (censys_secret or censys_id) and not censys_secret.startswith("demo_") and not censys_secret.startswith("your_"):
         try:
             proxy_session = OpSecProxySession()
-            url = f"https://search.censys.io/api/v2/hosts/{target_ip}"
-            resp = proxy_session.session.get(url, auth=(censys_id, censys_secret), timeout=10)
-            if resp.status_code == 200:
-                censys_data = resp.json().get("result", {})
-                logger.info(f"Successfully fetched live Censys v2 data for {clean_target} ({target_ip})")
-            else:
-                logger.warning(f"Censys API v2 returned status {resp.status_code}: {resp.text[:150]}")
+            # If secret starts with 'censys_' or looks like a v3 PAT, try v3 Platform API first
+            if censys_secret.startswith("censys_") or len(censys_secret) >= 40:
+                v3_url = f"https://api.platform.censys.io/v3/global/asset/host/{target_ip}"
+                headers = {"Authorization": f"Bearer {censys_secret}", "accept": "application/json"}
+                if len(censys_id) == 36 and "-" in censys_id:
+                    headers["X-Organization-ID"] = censys_id
+                resp = proxy_session.session.get(v3_url, headers=headers, timeout=10)
+                if resp.status_code == 200:
+                    censys_data = resp.json().get("result", {}).get("resource", {})
+                    censys_v3_mode = True
+                    logger.info(f"Successfully fetched live Censys v3 Platform API data for {clean_target} ({target_ip})")
+                else:
+                    logger.warning(f"Censys v3 Platform API returned {resp.status_code}. Attempting v2 fallback...")
+
+            # If not v3 mode yet and both id & secret exist, try v2 Search API
+            if not censys_data and censys_id and censys_secret:
+                v2_url = f"https://search.censys.io/api/v2/hosts/{target_ip}"
+                resp2 = proxy_session.session.get(v2_url, auth=(censys_id, censys_secret), timeout=10)
+                if resp2.status_code == 200:
+                    censys_data = resp2.json().get("result", {})
+                    censys_v3_mode = False
+                    logger.info(f"Successfully fetched live Censys v2 data for {clean_target} ({target_ip})")
         except Exception as e:
             logger.warning(f"Live Censys query encountered error ({e}).")
 
@@ -245,45 +263,86 @@ def generate_infrastructure_results(target: str) -> Dict[str, Any]:
         cve_alerts = []
 
         if censys_data:
-            for s in censys_data.get("services", []):
-                port = s.get("port")
-                s_name = s.get("service_name", "UNKNOWN")
-                proto = s.get("transport_protocol", "TCP")
-                banner = s.get("banner", "")[:150] if s.get("banner") else f"{s_name} service operational"
-                services.append({
-                    "port": port,
-                    "service_name": s_name,
-                    "transport_protocol": proto,
-                    "state": "OPEN",
-                    "banner": banner,
-                    "risk": "Medium - Open network service exposed" if port not in [80, 443] else "Low - Standard Web Port"
-                })
-                if "tls" in s and isinstance(s["tls"], dict):
-                    leaf = s["tls"].get("certificates", {}).get("leaf_data", {})
-                    if leaf:
-                        names = leaf.get("names", [])
-                        subject = leaf.get("subject", {}).get("common_name", names[0] if names else clean_target)
-                        tls_certs.append({
-                            "subject_dn": f"CN={subject}",
-                            "issuer_dn": leaf.get("issuer", {}).get("common_name", "Public CA"),
-                            "valid_from": leaf.get("validity", {}).get("start", ""),
-                            "valid_to": leaf.get("validity", {}).get("end", ""),
-                            "fingerprint_sha256": leaf.get("fingerprint_sha256", "Verified via Censys Platform API"),
-                            "suspicious_indicators": [f"SAN count: {len(names)}", f"Linked target: {clean_target}"]
-                        })
-            if "autonomous_system" in censys_data:
-                asn_str = censys_data["autonomous_system"].get("name", asn_str)
-                asn_num = censys_data["autonomous_system"].get("asn", asn_num)
-            if "location" in censys_data:
-                loc = censys_data["location"]
-                location_dict = {
-                    "country": loc.get("country", "Unknown"),
-                    "city": loc.get("city", "Unknown"),
-                    "region": loc.get("province", "Unknown"),
-                    "latitude": loc.get("coordinates", {}).get("latitude", 0.0),
-                    "longitude": loc.get("coordinates", {}).get("longitude", 0.0),
-                    "isp": asn_str
-                }
+            if censys_v3_mode:
+                for s in censys_data.get("services", []):
+                    port = s.get("port")
+                    proto = s.get("protocol", "UNKNOWN")
+                    trans = s.get("transport_protocol", "TCP").upper() if isinstance(s.get("transport_protocol"), str) else "TCP"
+                    banner = s.get("banner", "")[:150] if s.get("banner") else f"{proto} ({trans}) active on port {port}"
+                    services.append({
+                        "port": port,
+                        "service_name": proto,
+                        "transport_protocol": trans,
+                        "state": "OPEN",
+                        "banner": banner,
+                        "risk": "Medium - Open network service exposed" if port not in [80, 443] else "Low - Standard Web Port"
+                    })
+                    if "tls" in s and isinstance(s["tls"], dict):
+                        leaf = s["tls"].get("certificates", {}).get("leaf_data", {})
+                        if leaf:
+                            names = leaf.get("names", [])
+                            subject = leaf.get("subject", {}).get("common_name", names[0] if names else clean_target)
+                            tls_certs.append({
+                                "subject_dn": f"CN={subject}",
+                                "issuer_dn": leaf.get("issuer", {}).get("common_name", "Public CA"),
+                                "valid_from": leaf.get("validity", {}).get("start", ""),
+                                "valid_to": leaf.get("validity", {}).get("end", ""),
+                                "fingerprint_sha256": leaf.get("fingerprint_sha256", "Verified via Censys Platform API v3"),
+                                "suspicious_indicators": [f"SAN count: {len(names)}", f"Linked target: {clean_target}"]
+                            })
+                if "autonomous_system" in censys_data:
+                    asn_str = censys_data["autonomous_system"].get("description", censys_data["autonomous_system"].get("name", asn_str))
+                    asn_num = censys_data["autonomous_system"].get("asn", asn_num)
+                if "location" in censys_data:
+                    loc = censys_data["location"]
+                    location_dict = {
+                        "country": loc.get("country", "Unknown"),
+                        "city": loc.get("city", "Unknown"),
+                        "region": loc.get("province", "Unknown"),
+                        "latitude": loc.get("coordinates", {}).get("latitude", 0.0),
+                        "longitude": loc.get("coordinates", {}).get("longitude", 0.0),
+                        "isp": asn_str
+                    }
+            else:
+                for s in censys_data.get("services", []):
+                    port = s.get("port")
+                    s_name = s.get("service_name", "UNKNOWN")
+                    proto = s.get("transport_protocol", "TCP")
+                    banner = s.get("banner", "")[:150] if s.get("banner") else f"{s_name} service operational"
+                    services.append({
+                        "port": port,
+                        "service_name": s_name,
+                        "transport_protocol": proto,
+                        "state": "OPEN",
+                        "banner": banner,
+                        "risk": "Medium - Open network service exposed" if port not in [80, 443] else "Low - Standard Web Port"
+                    })
+                    if "tls" in s and isinstance(s["tls"], dict):
+                        leaf = s["tls"].get("certificates", {}).get("leaf_data", {})
+                        if leaf:
+                            names = leaf.get("names", [])
+                            subject = leaf.get("subject", {}).get("common_name", names[0] if names else clean_target)
+                            tls_certs.append({
+                                "subject_dn": f"CN={subject}",
+                                "issuer_dn": leaf.get("issuer", {}).get("common_name", "Public CA"),
+                                "valid_from": leaf.get("validity", {}).get("start", ""),
+                                "valid_to": leaf.get("validity", {}).get("end", ""),
+                                "fingerprint_sha256": leaf.get("fingerprint_sha256", "Verified via Censys Platform API"),
+                                "suspicious_indicators": [f"SAN count: {len(names)}", f"Linked target: {clean_target}"]
+                            })
+                if "autonomous_system" in censys_data:
+                    asn_str = censys_data["autonomous_system"].get("name", asn_str)
+                    asn_num = censys_data["autonomous_system"].get("asn", asn_num)
+                if "location" in censys_data:
+                    loc = censys_data["location"]
+                    location_dict = {
+                        "country": loc.get("country", "Unknown"),
+                        "city": loc.get("city", "Unknown"),
+                        "region": loc.get("province", "Unknown"),
+                        "latitude": loc.get("coordinates", {}).get("latitude", 0.0),
+                        "longitude": loc.get("coordinates", {}).get("longitude", 0.0),
+                        "isp": asn_str
+                    }
 
         if shodan_data:
             if not asn_str or asn_str == "AS-UNKNOWN":
@@ -340,7 +399,7 @@ def generate_infrastructure_results(target: str) -> Dict[str, Any]:
             "target": clean_target,
             "scan_type": "infrastructure",
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "proxy_status": "Rotated OpSec Proxy / Live Censys v2 & Shodan Engine",
+            "proxy_status": "Rotated OpSec Proxy / Live Censys Platform API & Shodan Threat Intel Engine",
             "asn": f"{asn_str} (ASN: {asn_num})",
             "asn_num": int(asn_num) if isinstance(asn_num, int) or (isinstance(asn_num, str) and asn_num.isdigit()) else 0,
             "location": location_dict,

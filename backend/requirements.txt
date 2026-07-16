@@ -6,3 +6,4 @@ requests>=2.31.0
 Pillow>=10.0.0
 censys>=2.2.0
 python-dotenv>=1.0.0
+censys-platform>=0.15.0
